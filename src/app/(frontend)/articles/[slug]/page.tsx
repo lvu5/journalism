@@ -1,0 +1,112 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import rehypeSanitize from 'rehype-sanitize'
+import remarkGfm from 'remark-gfm'
+
+import { formatDate, topicLabels } from '@/lib/content'
+import { getLocale } from '@/lib/get-locale'
+import { getArticleBySlug } from '@/lib/queries'
+
+type ArticlePageProps = { params: Promise<{ slug: string }> }
+
+export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
+  const locale = await getLocale()
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
+  return article ? { title: article.title, description: article.summary } : { title: locale === 'vi' ? 'Không tìm thấy bài' : 'Article not found' }
+}
+
+export default async function ArticlePage({ params }: ArticlePageProps) {
+  const locale = await getLocale()
+  const copy = locale === 'vi' ? {
+    back: 'Trở lại bài mới', demo: 'Nội dung minh họa — không phải tin thực tế.', author: 'Tác giả',
+    editorial: 'Ban biên tập', eventDate: 'Ngày sự kiện', published: 'Xuất bản', sources: 'Nguồn',
+    commitment: 'Cam kết biên tập', commitments: ['Nguyên văn tài liệu được ưu tiên.', 'Khoảng trống dữ liệu được ghi rõ.', 'Thay đổi sau xuất bản được lưu vết.'],
+    citations: 'Nguồn & tài liệu', items: 'mục', accessed: 'Truy cập', original: 'Nguồn gốc', archive: 'Bản lưu',
+  } : {
+    back: 'Back to recent', demo: 'Demonstration content — not real reporting.', author: 'Author',
+    editorial: 'Editorial team', eventDate: 'Event date', published: 'Published', sources: 'Sources',
+    commitment: 'Editorial commitment', commitments: ['Primary documents are preferred.', 'Data gaps are clearly stated.', 'Post-publication changes are recorded.'],
+    citations: 'Sources & documents', items: 'items', accessed: 'Accessed', original: 'Original source', archive: 'Archive',
+  }
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
+  if (!article) notFound()
+
+  return (
+    <article className="story-page">
+      <header className="story-header shell">
+        <Link className="back-link" href="/recent">← {copy.back}</Link>
+        {article.isDemo && <p className="inline-demo-note">{copy.demo}</p>}
+        <div className="story-taxonomy">
+          {article.topics.map((topic) => <span key={topic}>{topicLabels[locale][topic] || topic}</span>)}
+        </div>
+        <h1>{article.title}</h1>
+        <p className="story-summary">{article.summary}</p>
+        <div className="story-byline">
+          <div>
+            <span>{copy.author}</span>
+            <strong>{article.byline.length ? article.byline.join(', ') : copy.editorial}</strong>
+          </div>
+          <div>
+            <span>{copy.eventDate}</span>
+            <strong>{formatDate(article.eventDate, true, locale)}</strong>
+          </div>
+          <div>
+            <span>{copy.published}</span>
+            <strong>{formatDate(article.publishedAt, true, locale)}</strong>
+          </div>
+          <div>
+            <span>{copy.sources}</span>
+            <strong>{article.citations.length}</strong>
+          </div>
+        </div>
+      </header>
+
+      <div className="story-layout shell">
+        <aside className="story-rail">
+          <p>{copy.commitment}</p>
+          {copy.commitments.map((commitment) => <span key={commitment}>{commitment}</span>)}
+        </aside>
+        <div className="markdown-body">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            {article.bodyMarkdown}
+          </ReactMarkdown>
+        </div>
+      </div>
+
+      <section className="citations shell" aria-labelledby="citations-heading">
+        <div className="section-heading section-heading-large">
+          <h2 id="citations-heading">{copy.citations}</h2>
+          <span>{article.citations.length} {copy.items}</span>
+        </div>
+        <ol>
+          {article.citations.map((citation, index) => (
+            <li key={`${citation.url}-${index}`}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <div>
+                <h3>{citation.sourceTitle}</h3>
+                <p>
+                  {[citation.publisher, `${copy.accessed} ${formatDate(citation.accessedAt, true, locale)}`]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+                {citation.note && <p className="citation-note">{citation.note}</p>}
+              </div>
+              <div className="citation-links">
+                <a href={citation.url} rel="noreferrer noopener" target="_blank">{copy.original} ↗</a>
+                {citation.archiveUrl && (
+                  <a href={citation.archiveUrl} rel="noreferrer noopener" target="_blank">{copy.archive} ↗</a>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </article>
+  )
+}

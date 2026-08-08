@@ -68,6 +68,10 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    articles: Article;
+    incidents: Incident;
+    'community-contributions': CommunityContribution;
+    reviews: Review;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -77,6 +81,10 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
+    incidents: IncidentsSelect<false> | IncidentsSelect<true>;
+    'community-contributions': CommunityContributionsSelect<false> | CommunityContributionsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -84,7 +92,7 @@ export interface Config {
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {};
@@ -122,7 +130,14 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
+  publicName: string;
+  bio?: string | null;
+  /**
+   * Reviewers can also write. Only administrators can change roles.
+   */
+  roles: ('admin' | 'reviewer' | 'author')[];
+  active?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -143,12 +158,161 @@ export interface User {
   collection: 'users';
 }
 /**
+ * Draft, review, and publish reported articles.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  eventDate: string;
+  /**
+   * A concise standfirst for cards and search results.
+   */
+  summary: string;
+  /**
+   * Markdown is rendered as formatted text; raw HTML is not published.
+   */
+  bodyMarkdown: string;
+  authors?: (number | User)[] | null;
+  /**
+   * Use for guest or pseudonymous contributors who do not have an account.
+   */
+  byline?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  citations: {
+    sourceTitle: string;
+    publisher?: string | null;
+    url: string;
+    accessedAt: string;
+    archiveUrl?: string | null;
+    note?: string | null;
+    id?: string | null;
+  }[];
+  relatedIncidents?: (number | Incident)[] | null;
+  topics?: ('public-spending' | 'environment' | 'justice' | 'labour' | 'land' | 'public-services')[] | null;
+  /**
+   * Authors may submit; reviewers decide; administrators publish.
+   */
+  workflowStatus: 'draft' | 'submitted' | 'in_review' | 'changes_requested' | 'approved' | 'published' | 'rejected';
+  submittedBy?: (number | null) | User;
+  publishedAt?: string | null;
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Verified incident records that power the notable list and timeline.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incidents".
+ */
+export interface Incident {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  dateStart: string;
+  dateEnd?: string | null;
+  summary: string;
+  notabilityReason: string;
+  location?: string | null;
+  /**
+   * The public lifecycle of the case. This is separate from verification status.
+   */
+  caseStatus: 'newly-opened' | 'investigating' | 'accepting-contributions' | 'reviewing-contributions' | 'closed';
+  /**
+   * Opens the public contribution form for this case.
+   */
+  crowdsourcingEnabled?: boolean | null;
+  verificationStatus: 'under-review' | 'disputed' | 'confirmed' | 'resolved';
+  severity: 'low' | 'medium' | 'high';
+  relatedArticles?: (number | Article)[] | null;
+  citations: {
+    sourceTitle: string;
+    url: string;
+    archiveUrl?: string | null;
+    accessedAt: string;
+    id?: string | null;
+  }[];
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Tips and evidence submitted by the public. Nothing is public until approved.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "community-contributions".
+ */
+export interface CommunityContribution {
+  id: number;
+  incident: number | Incident;
+  contributionType: 'document' | 'eyewitness' | 'data-tip' | 'correction' | 'context' | 'other';
+  title: string;
+  description: string;
+  sourceUrl?: string | null;
+  contributorName?: string | null;
+  /**
+   * Never displayed publicly.
+   */
+  contactEmail: string;
+  publishName?: boolean | null;
+  consentToReview: boolean;
+  reviewStatus: 'received' | 'screening' | 'needs-info' | 'approved' | 'rejected';
+  /**
+   * Only takes effect after the contribution is approved.
+   */
+  publishInCase?: boolean | null;
+  reviewerNotes?: string | null;
+  reviewedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Private editorial decisions and feedback.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  article: number | Article;
+  decision: 'approve' | 'changes_requested' | 'reject';
+  /**
+   * Visible to the submitting author and editorial staff.
+   */
+  comments: string;
+  reviewer: number | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
+  caption?: string | null;
+  visibility: 'private' | 'public';
+  uploadedBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -166,7 +330,7 @@ export interface Media {
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -183,20 +347,36 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: number | Article;
+      } | null)
+    | ({
+        relationTo: 'incidents';
+        value: number | Incident;
+      } | null)
+    | ({
+        relationTo: 'community-contributions';
+        value: number | CommunityContribution;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -206,10 +386,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -229,7 +409,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -240,6 +420,10 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  publicName?: T;
+  bio?: T;
+  roles?: T;
+  active?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -259,10 +443,118 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  eventDate?: T;
+  summary?: T;
+  bodyMarkdown?: T;
+  authors?: T;
+  byline?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  citations?:
+    | T
+    | {
+        sourceTitle?: T;
+        publisher?: T;
+        url?: T;
+        accessedAt?: T;
+        archiveUrl?: T;
+        note?: T;
+        id?: T;
+      };
+  relatedIncidents?: T;
+  topics?: T;
+  workflowStatus?: T;
+  submittedBy?: T;
+  publishedAt?: T;
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incidents_select".
+ */
+export interface IncidentsSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  dateStart?: T;
+  dateEnd?: T;
+  summary?: T;
+  notabilityReason?: T;
+  location?: T;
+  caseStatus?: T;
+  crowdsourcingEnabled?: T;
+  verificationStatus?: T;
+  severity?: T;
+  relatedArticles?: T;
+  citations?:
+    | T
+    | {
+        sourceTitle?: T;
+        url?: T;
+        archiveUrl?: T;
+        accessedAt?: T;
+        id?: T;
+      };
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "community-contributions_select".
+ */
+export interface CommunityContributionsSelect<T extends boolean = true> {
+  incident?: T;
+  contributionType?: T;
+  title?: T;
+  description?: T;
+  sourceUrl?: T;
+  contributorName?: T;
+  contactEmail?: T;
+  publishName?: T;
+  consentToReview?: T;
+  reviewStatus?: T;
+  publishInCase?: T;
+  reviewerNotes?: T;
+  reviewedBy?: T;
+  approvedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  article?: T;
+  decision?: T;
+  comments?: T;
+  reviewer?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  caption?: T;
+  visibility?: T;
+  uploadedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

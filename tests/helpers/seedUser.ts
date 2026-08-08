@@ -4,6 +4,9 @@ import config from '../../src/payload.config.js'
 export const testUser = {
   email: 'dev@payloadcms.com',
   password: 'test',
+  publicName: 'Test Administrator',
+  roles: ['admin'] as Array<'admin'>,
+  active: true,
 }
 
 /**
