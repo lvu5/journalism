@@ -1,67 +1,126 @@
-# Payload Blank Template
+# Hồ Sơ Mở — Open Journalism Vietnam
 
-This template comes configured with the bare minimum to get started on anything you need.
+An MVP for a Vietnamese investigative-journalism publication. It combines a public newsroom with a private editorial workflow for authors, reviewers, and administrators.
 
-## Quick start
+## What is included
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+- Public homepage with a lead investigation, recent articles, and a notable incident
+- Recent-articles index
+- Case index with a five-stage public lifecycle and separate verification state
+- Public case pages with structured sources and approved community evidence
+- Moderated community contribution intake for cases that opt into crowdsourcing
+- Accessible incident timeline
+- Markdown article pages with sanitized output and structured citations
+- Payload admin area at `/admin`
+- Drafts, autosave, revision history, and separated workflow states
+- Role-aware access for administrators, reviewers, and authors
+- Private review decisions and feedback
+- PostgreSQL-backed content and authentication
 
-## Quick Start - local setup
+The public site shows clearly labelled demonstration content until the first real article or incident is published.
 
-To spin up this template locally, follow these steps:
+## Stack
 
-### Clone
+- Next.js 16 and React 19
+- Payload CMS 3
+- PostgreSQL
+- TypeScript
+- React Markdown, GFM, and HTML sanitization
+- Playwright and Vitest
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+## Local setup
 
-### Development
+Requirements: Node.js 20.9 or newer, pnpm, and PostgreSQL 14 or newer.
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+1. Copy `.env.example` to `.env`.
+2. Create a PostgreSQL role and database that match `DATABASE_URL`.
+3. Replace `PAYLOAD_SECRET` with a long random value.
+4. Install and run:
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+   ```bash
+   pnpm install
+   pnpm dev
+   ```
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+5. Open `http://localhost:3000/admin` and create the first user. The first user receives the administrator role.
 
-#### Docker (Optional)
+The public site is available at `http://localhost:3000`.
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+### PostgreSQL with Docker
 
-To do so, follow these steps:
+The included Compose file runs only PostgreSQL, leaving the app on the host for fast reloads:
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+```bash
+docker compose up -d
+pnpm dev
+```
 
-## How it works
+## Editorial roles
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+- **Author:** creates and edits their own drafts, then moves them to `Submitted`. An author can revise a story after changes are requested.
+- **Reviewer:** has author capabilities and can review all submitted work, approve it, request changes, or reject it.
+- **Administrator:** manages users and roles, controls incidents and media, and is the only role that publishes in the MVP.
 
-### Collections
+A user can have more than one role. Reviewers can therefore continue writing under the same account.
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+## Article workflow
 
-- #### Users (Authentication)
+```text
+Draft → Submitted → In review → Changes requested → Submitted
+                              ↘ Approved → Published
+                              ↘ Rejected
+```
 
-  Users are auth-enabled collections that have access to the admin panel.
+Payload's `_status` remains `draft` throughout editorial review. It changes to `published` only when an administrator publishes, preventing workflow approval from accidentally making a story public.
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+## Case and community workflow
 
-- #### Media
+Case lifecycle labels are public and intentionally separate from evidence verification:
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+```text
+Hồ sơ mới mở → Đang điều tra → Kêu gọi cộng đồng → Đang thẩm định → Đã đóng hồ sơ
+```
 
-### Docker
+An editor can enable community intake on any case except a closed case. Public submissions use this private review queue:
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+```text
+Đã tiếp nhận → Đang sàng lọc → Cần thêm thông tin
+                              ↘ Đã duyệt → optionally shown on the case
+                              ↘ Không sử dụng
+```
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+Raw writes to the contribution collection are blocked. The server-side intake validates the case and form, sets every submission to `Received`, and prevents public display until a reviewer both approves it and selects `Show on the public case page`. Contact email, consent records, and reviewer notes stay private.
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+The MVP accepts source links rather than file uploads. Add a secure, encrypted document-drop workflow before asking sources to submit sensitive files.
 
-## Questions
+## Content model
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+- **Articles:** title, event date, summary, Markdown body, optional account authors, optional public bylines, citations, topics, related incidents, and workflow state.
+- **Cases:** event date range, lifecycle status, verification status, crowdsourcing switch, significance, severity, citations, location, and related articles.
+- **Community contributions:** case, contribution type, public content, private contact details, review state, reviewer notes, and publication approval.
+- **Reviews:** private reviewer decision and feedback linked to an article.
+- **Users:** profile, roles, active state, login protection, and revision history.
+- **Media:** images or PDFs, private by default and public only when explicitly marked.
+
+## Useful commands
+
+```bash
+pnpm dev              # local development
+pnpm build            # production build
+pnpm generate:types   # refresh Payload-generated TypeScript types
+pnpm lint             # lint the codebase
+pnpm test:int         # integration tests
+pnpm test:e2e         # browser tests
+```
+
+Run `pnpm generate:types` whenever a Payload collection or field changes.
+
+## Before a public launch
+
+- Add mandatory MFA or an MFA-capable identity provider for staff accounts.
+- Configure a transactional email provider for verification and password recovery.
+- Move uploads to private S3-compatible storage and use signed access for unpublished files.
+- Add rate limiting and bot protection to community intake, plus a WAF, encrypted off-site backups, and log redaction.
+- Replace the local database credentials and rotate `PAYLOAD_SECRET`.
+- Review publication, corrections, source-protection, and takedown policies with qualified local counsel.
+# journalism
