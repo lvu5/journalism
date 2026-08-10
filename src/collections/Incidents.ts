@@ -1,11 +1,39 @@
-import { slugField, type CollectionBeforeChangeHook, type CollectionConfig } from 'payload'
+import { slugField, ValidationError, type CollectionBeforeChangeHook, type CollectionConfig } from 'payload'
 
 import { getUser, isAdmin, isReviewer, reviewers } from '../access/roles'
+import { validateHttpUrl } from '../fields/validate-http-url'
 
-const incidentWorkflow: CollectionBeforeChangeHook = ({ data, req }) => {
+// Allowed case-status moves for non-admin staff. Admins are unrestricted so
+// they can reopen or correct a case. `closed` is terminal for everyone else.
+const caseStatusFlow: Record<string, string[]> = {
+  'newly-opened': ['investigating', 'closed'],
+  investigating: ['accepting-contributions', 'reviewing-contributions', 'closed'],
+  'accepting-contributions': ['reviewing-contributions', 'investigating', 'closed'],
+  'reviewing-contributions': ['accepting-contributions', 'closed'],
+  closed: [],
+}
+
+const incidentWorkflow: CollectionBeforeChangeHook = ({ collection, data, originalDoc, req }) => {
   const user = getUser(req.user)
   if (user && !isAdmin(user)) data._status = 'draft'
   if (data.caseStatus === 'closed') data.crowdsourcingEnabled = false
+
+  const previousStatus = originalDoc?.caseStatus
+  const nextStatus = data.caseStatus ?? previousStatus
+  if (previousStatus && nextStatus && previousStatus !== nextStatus && !isAdmin(user)) {
+    const allowed = caseStatusFlow[previousStatus] ?? []
+    if (!allowed.includes(nextStatus)) {
+      throw new ValidationError({
+        collection: collection?.slug,
+        errors: [
+          {
+            message: `A case cannot move from '${previousStatus}' to '${nextStatus}'.`,
+            path: 'caseStatus',
+          },
+        ],
+      })
+    }
+  }
   return data
 }
 
@@ -131,8 +159,8 @@ export const Incidents: CollectionConfig = {
       required: true,
       fields: [
         { name: 'sourceTitle', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
-        { name: 'archiveUrl', type: 'text', label: 'Archived URL' },
+        { name: 'url', type: 'text', required: true, validate: validateHttpUrl },
+        { name: 'archiveUrl', type: 'text', label: 'Archived URL', validate: validateHttpUrl },
         {
           name: 'accessedAt',
           type: 'date',
