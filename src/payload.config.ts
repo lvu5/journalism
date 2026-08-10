@@ -17,6 +17,19 @@ import { migrations } from './migrations'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// Fail fast at boot rather than signing sessions with an empty secret or
+// failing late with an opaque database error.
+const PAYLOAD_SECRET = process.env.PAYLOAD_SECRET
+if (!PAYLOAD_SECRET) {
+  throw new Error(
+    'PAYLOAD_SECRET is required. Copy .env.example to .env and set a long random value.',
+  )
+}
+const DATABASE_URL = process.env.DATABASE_URL
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL is required (PostgreSQL connection string).')
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -26,13 +39,13 @@ export default buildConfig({
   },
   collections: [Users, Articles, Incidents, CommunityContributions, Reviews, Media],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: PAYLOAD_SECRET,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || '',
+      connectionString: DATABASE_URL,
     },
     // Pending migrations run automatically when the production server boots,
     // so deploying a new container also migrates its database.

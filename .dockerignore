@@ -1,0 +1,15 @@
+# Keep the Docker build context small and secrets out of image layers.
+node_modules
+.next
+.env*
+!.env.example
+.git
+tests
+playwright-report
+test-results
+blob-report
+coverage
+media
+*.tsbuildinfo
+Dockerfile
+docker-compose.yml

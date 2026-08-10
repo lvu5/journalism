@@ -10,7 +10,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+# (pnpm-workspace.yaml carries the allowBuilds list that pnpm needs to run
+# native build scripts for sharp/esbuild)
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* pnpm-workspace.yaml* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -28,6 +30,12 @@ COPY . .
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Payload's config is evaluated during `next build` and fails fast without
+# these; placeholders are scoped to the builder stage and never ship in the
+# final image. Real values are provided to the runner at deploy time.
+ENV DATABASE_URL=postgres://localhost:5432/build-time-placeholder
+ENV PAYLOAD_SECRET=build-time-placeholder
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
