@@ -17,7 +17,14 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const locale = await getLocale()
   const { slug } = await params
   const article = await getArticleBySlug(slug)
-  return article ? { title: article.title, description: article.summary } : { title: locale === 'vi' ? 'Không tìm thấy bài' : 'Article not found' }
+  return article
+    ? {
+        title: article.title,
+        description: article.summary,
+        alternates: { canonical: `/articles/${article.slug}` },
+        openGraph: { title: article.title, description: article.summary, type: 'article' },
+      }
+    : { title: locale === 'vi' ? 'Không tìm thấy bài' : 'Article not found' }
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {

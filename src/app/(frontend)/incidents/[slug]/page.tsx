@@ -21,7 +21,12 @@ export async function generateMetadata({ params }: CasePageProps): Promise<Metad
   const { slug } = await params
   const incident = await getIncidentBySlug(slug)
   return incident
-    ? { title: incident.title, description: incident.summary }
+    ? {
+        title: incident.title,
+        description: incident.summary,
+        alternates: { canonical: `/incidents/${incident.slug}` },
+        openGraph: { title: incident.title, description: incident.summary, type: 'article' },
+      }
     : { title: locale === 'vi' ? 'Không tìm thấy hồ sơ' : 'Case not found' }
 }
 

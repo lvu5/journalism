@@ -5,17 +5,26 @@ import React from 'react'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 import { getLocale } from '@/lib/get-locale'
+import { commonCopy } from '@/lib/i18n'
 
 import './styles.css'
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
-  const requestHeaders = await headers()
-  const forwardedHost = requestHeaders.get('x-forwarded-host')?.split(',')[0]?.trim()
-  const host = forwardedHost || requestHeaders.get('host') || 'localhost:3000'
-  const forwardedProtocol = requestHeaders.get('x-forwarded-proto')?.split(',')[0]?.trim()
-  const protocol = forwardedProtocol || (host.startsWith('localhost') ? 'http' : 'https')
-  const baseURL = new URL(`${protocol}://${host}`)
+  // Prefer the configured site origin; request headers are only a local-dev
+  // fallback, since Host/X-Forwarded-Host are client-spoofable.
+  const envURL = process.env.NEXT_PUBLIC_SITE_URL
+  let baseURL: URL
+  if (envURL) {
+    baseURL = new URL(envURL)
+  } else {
+    const requestHeaders = await headers()
+    const forwardedHost = requestHeaders.get('x-forwarded-host')?.split(',')[0]?.trim()
+    const host = forwardedHost || requestHeaders.get('host') || 'localhost:3000'
+    const forwardedProtocol = requestHeaders.get('x-forwarded-proto')?.split(',')[0]?.trim()
+    const protocol = forwardedProtocol || (host.startsWith('localhost') ? 'http' : 'https')
+    baseURL = new URL(`${protocol}://${host}`)
+  }
   const description = locale === 'vi'
     ? 'Hồ Sơ Mở — báo chí điều tra độc lập, dựa trên dữ kiện, nguồn công khai và quyền phản hồi.'
     : 'Hồ Sơ Mở — independent investigative journalism built on evidence, public sources, and the right of reply.'
@@ -52,7 +61,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     <html lang={locale}>
       <body>
         <a className="skip-link" href="#main-content">
-          {locale === 'vi' ? 'Bỏ qua đến nội dung' : 'Skip to content'}
+          {commonCopy[locale].skip}
         </a>
         <SiteHeader locale={locale} />
         <main id="main-content">{children}</main>

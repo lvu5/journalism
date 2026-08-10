@@ -4,13 +4,14 @@ import { ArticleCard } from '@/components/ArticleCard'
 import { IncidentCard } from '@/components/IncidentCard'
 import { formatDate } from '@/lib/content'
 import { getLocale } from '@/lib/get-locale'
-import { getArticles, getIncidents } from '@/lib/queries'
+import { getArticles, getFeaturedArticle, getFeaturedIncident, getIncidents } from '@/lib/queries'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const locale = await getLocale()
   const copy = locale === 'vi' ? {
+    demoBadge: 'Bản MVP',
     demo: 'Nội dung bên dưới là dữ liệu minh họa, không phải sự kiện có thật.',
     kicker: 'Một tòa soạn mở cho những câu hỏi khó',
     headline1: 'Bằng chứng trước.',
@@ -37,6 +38,7 @@ export default async function HomePage() {
     submitDescription: 'Gửi bản thảo bằng Markdown, đính kèm nguồn và theo dõi phản hồi của biên tập viên trong cùng một quy trình.',
     authorArea: 'Vào khu vực tác giả',
   } : {
+    demoBadge: 'MVP demo',
     demo: 'The content below is demonstration data, not reporting about real events.',
     kicker: 'An open newsroom for difficult questions',
     headline1: 'Evidence first.',
@@ -63,10 +65,15 @@ export default async function HomePage() {
     submitDescription: 'Submit a Markdown draft, attach sources, and follow editorial feedback in one workflow.',
     authorArea: 'Open author area',
   }
-  const [articles, incidents] = await Promise.all([getArticles(6), getIncidents(4)])
-  const lead = articles.find((article) => article.featured) || articles[0]
+  const [articles, incidents, featuredArticle, featuredIncident] = await Promise.all([
+    getArticles(6),
+    getIncidents(4),
+    getFeaturedArticle(),
+    getFeaturedIncident(),
+  ])
+  const lead = featuredArticle || articles[0]
   const recent = articles.filter((article) => article.id !== lead.id).slice(0, 4)
-  const featuredIncident = incidents.find((incident) => incident.featured) || incidents[0]
+  const notableIncident = featuredIncident || incidents[0]
   const isDemo = articles.some((article) => article.isDemo) || incidents.some((incident) => incident.isDemo)
 
   return (
@@ -74,7 +81,7 @@ export default async function HomePage() {
       {isDemo && (
         <div className="demo-notice" role="note">
           <div className="shell">
-            <strong>Bản MVP</strong>
+            <strong>{copy.demoBadge}</strong>
             <span>{copy.demo}</span>
           </div>
         </div>
@@ -147,7 +154,7 @@ export default async function HomePage() {
             <h2 id="incident-heading">{copy.notable}</h2>
             <Link href="/incidents">{copy.openIndex} →</Link>
           </div>
-          <IncidentCard incident={featuredIncident} locale={locale} />
+          <IncidentCard incident={notableIncident} locale={locale} />
           <div className="incident-feature-footer">
             <p>{copy.statusNote}</p>
             <Link className="outline-link" href="/timeline">

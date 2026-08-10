@@ -55,6 +55,12 @@ export default buildConfig({
         }
       : {}),
   }),
+  upload: {
+    limits: {
+      // Payload-wide cap so any authenticated uploader cannot exhaust disk.
+      fileSize: 10 * 1024 * 1024, // 10 MB
+    },
+  },
   sharp,
   plugins: [],
 })

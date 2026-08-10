@@ -19,8 +19,13 @@
 html {
   background: var(--paper);
   color: var(--ink);
-  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -945,21 +950,24 @@ select {
 }
 
 .case-filter-reset {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 7px;
   border: 1px solid var(--ink);
   border-radius: 0;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
+  text-decoration: none;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .case-filter-reset:hover,
 .case-filter-reset:focus-visible,
-.case-filter-reset[aria-pressed='true'] {
+.case-filter-reset[aria-current='true'] {
   background: var(--ink);
   color: var(--paper);
 }
@@ -973,6 +981,7 @@ select {
   background: transparent;
   color: inherit;
   cursor: pointer;
+  text-decoration: none;
   text-align: left;
 }
 
@@ -1031,6 +1040,37 @@ select {
   font-family: Georgia, 'Times New Roman', serif;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 34px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pagination-link {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.pagination-link:hover,
+.pagination-link:focus-visible {
+  text-decoration: underline;
+}
+
+.pagination-link.is-disabled {
+  color: var(--muted);
+  cursor: default;
+  text-decoration: none;
+}
+
+.pagination-status {
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
 .listing-articles .article-card {
   min-height: 260px;
 }
@@ -1051,6 +1091,65 @@ select {
 
 .listing-page .incident-card summary {
   color: var(--ink);
+}
+
+/* Light-context contrast: the values above are tuned for the dark homepage
+   band; these overrides meet WCAG AA (4.5:1) on --paper and lift the 8–9px
+   badges to a readable size. */
+.listing-page .incident-date {
+  color: #8a5f1c;
+}
+
+.listing-page .incident-status-row {
+  color: #5b574e;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+}
+
+.listing-page .status,
+.listing-page .case-status,
+.case-badges .status,
+.case-badges .case-status {
+  font-size: 11px;
+  letter-spacing: 0.07em;
+}
+
+.listing-page .case-status-newly-opened,
+.case-badges .case-status-newly-opened {
+  color: #2f6377;
+}
+
+.listing-page .case-status-investigating,
+.case-badges .case-status-investigating {
+  color: #8a5a10;
+}
+
+.listing-page .case-status-accepting-contributions,
+.case-badges .case-status-accepting-contributions {
+  color: #96352f;
+}
+
+.listing-page .case-status-reviewing-contributions,
+.case-badges .case-status-reviewing-contributions {
+  color: #6b4f8a;
+}
+
+.listing-page .case-status-closed,
+.case-badges .case-status-closed {
+  color: #5c584f;
+}
+
+.case-badges .status-under-review {
+  color: #8a5f1c;
+}
+
+.case-badges .status-disputed {
+  color: #a04540;
+}
+
+.case-badges .status-confirmed,
+.case-badges .status-resolved {
+  color: var(--green);
 }
 
 .timeline-page {
@@ -1882,6 +1981,14 @@ select {
 
 .form-message-error {
   color: var(--red);
+}
+
+.form-field-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .contribution-form .primary-button {
