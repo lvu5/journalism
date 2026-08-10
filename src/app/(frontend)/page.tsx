@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 export default async function HomePage() {
   const locale = await getLocale()
   const copy = locale === 'vi' ? {
+    demoBadge: 'Bản MVP',
     demo: 'Nội dung bên dưới là dữ liệu minh họa, không phải sự kiện có thật.',
     kicker: 'Một tòa soạn mở cho những câu hỏi khó',
     headline1: 'Bằng chứng trước.',
@@ -37,6 +38,7 @@ export default async function HomePage() {
     submitDescription: 'Gửi bản thảo bằng Markdown, đính kèm nguồn và theo dõi phản hồi của biên tập viên trong cùng một quy trình.',
     authorArea: 'Vào khu vực tác giả',
   } : {
+    demoBadge: 'MVP demo',
     demo: 'The content below is demonstration data, not reporting about real events.',
     kicker: 'An open newsroom for difficult questions',
     headline1: 'Evidence first.',
@@ -74,7 +76,7 @@ export default async function HomePage() {
       {isDemo && (
         <div className="demo-notice" role="note">
           <div className="shell">
-            <strong>Bản MVP</strong>
+            <strong>{copy.demoBadge}</strong>
             <span>{copy.demo}</span>
           </div>
         </div>

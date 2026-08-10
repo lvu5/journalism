@@ -74,5 +74,12 @@ export const Media: CollectionConfig = {
   ],
   upload: {
     mimeTypes: ['image/*', 'application/pdf'],
+    modifyResponseHeaders: ({ headers }) => {
+      // Serve PDFs as downloads instead of inline content on our origin.
+      if (headers.get('Content-Type') === 'application/pdf') {
+        headers.set('Content-Disposition', 'attachment')
+      }
+      return headers
+    },
   },
 }
