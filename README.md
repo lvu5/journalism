@@ -15,6 +15,9 @@ An MVP for a Vietnamese investigative-journalism publication. It combines a publ
 - Drafts, autosave, revision history, and separated workflow states
 - Role-aware access for administrators, reviewers, and authors
 - Private review decisions and feedback
+- Dated public corrections on published articles
+- Encrypted contributor contact emails (AES-256-GCM) and an append-only audit log
+- Terminal review queue for contribution triage (`pnpm tui`)
 - PostgreSQL-backed content and authentication
 
 The public site shows clearly labelled demonstration content until the first real article or incident is published.
@@ -26,6 +29,7 @@ The public site shows clearly labelled demonstration content until the first rea
 - PostgreSQL
 - TypeScript
 - React Markdown, GFM, and HTML sanitization
+- Ink (terminal UI)
 - Playwright and Vitest
 
 ## Local setup
@@ -111,6 +115,7 @@ pnpm generate:types   # refresh Payload-generated TypeScript types
 pnpm lint             # lint the codebase
 pnpm test:int         # integration tests
 pnpm test:e2e         # browser tests
+pnpm tui              # terminal review queue (staff)
 ```
 
 Integration and browser tests never touch the development database. They use a dedicated `journalism_test` database (overridable via `TEST_DATABASE_URL`). Set it up once:
@@ -133,14 +138,15 @@ Reviewers and administrators can triage community contributions from the termina
 pnpm tui
 ```
 
+It uses the same `.env` (`DATABASE_URL`, `PAYLOAD_SECRET`) as the app — no extra setup beyond `docker compose up -d`.
+
 Sign in with a reviewer or admin account. The queue lists pending submissions; open one to screen it, request more information, approve it, mark it unused, toggle public display (approved only), or edit private reviewer notes. The TUI talks to Payload's local API with your user attached, so every server-side rule still applies: role checks, review workflow hooks, contact-email decryption only for staff, and the append-only audit log all work exactly as in the admin UI.
 
 ## Before a public launch
 
 - Add mandatory MFA or an MFA-capable identity provider for staff accounts.
-- Configure a transactional email provider for verification and password recovery.
+- Configure production SMTP credentials (`SMTP_HOST` is required at boot in production; development falls back to an Ethereal test inbox).
 - Move uploads to private S3-compatible storage and use signed access for unpublished files. Until then, mount a persistent volume at `/app/media` — the container's upload directory is writable by the app user but ephemeral without a volume.
-- Add rate limiting and bot protection to community intake, plus a WAF, encrypted off-site backups, and log redaction.
-- Replace the local database credentials and rotate `PAYLOAD_SECRET`.
+- Community intake already has a per-instance rate limit and honeypot; add a shared rate-limit store (multi-instance), bot protection, and a WAF before opening it widely.
+- Replace the local database credentials. Rotating `PAYLOAD_SECRET` additionally requires re-encrypting stored contributor emails (see the runbook in `src/lib/field-crypto.ts`).
 - Review publication, corrections, source-protection, and takedown policies with qualified local counsel.
-# journalism
