@@ -1109,46 +1109,68 @@ select {
 .listing-page .status,
 .listing-page .case-status,
 .case-badges .status,
-.case-badges .case-status {
+.case-badges .case-status,
+.timeline-page .status,
+.timeline-page .case-status,
+.contribution-page .status,
+.contribution-page .case-status {
   font-size: 11px;
   letter-spacing: 0.07em;
 }
 
 .listing-page .case-status-newly-opened,
-.case-badges .case-status-newly-opened {
+.case-badges .case-status-newly-opened,
+.timeline-page .case-status-newly-opened,
+.contribution-page .case-status-newly-opened {
   color: #2f6377;
 }
 
 .listing-page .case-status-investigating,
-.case-badges .case-status-investigating {
+.case-badges .case-status-investigating,
+.timeline-page .case-status-investigating,
+.contribution-page .case-status-investigating {
   color: #8a5a10;
 }
 
 .listing-page .case-status-accepting-contributions,
-.case-badges .case-status-accepting-contributions {
+.case-badges .case-status-accepting-contributions,
+.timeline-page .case-status-accepting-contributions,
+.contribution-page .case-status-accepting-contributions {
   color: #96352f;
 }
 
 .listing-page .case-status-reviewing-contributions,
-.case-badges .case-status-reviewing-contributions {
+.case-badges .case-status-reviewing-contributions,
+.timeline-page .case-status-reviewing-contributions,
+.contribution-page .case-status-reviewing-contributions {
   color: #6b4f8a;
 }
 
 .listing-page .case-status-closed,
-.case-badges .case-status-closed {
+.case-badges .case-status-closed,
+.timeline-page .case-status-closed,
+.contribution-page .case-status-closed {
   color: #5c584f;
 }
 
-.case-badges .status-under-review {
+.case-badges .status-under-review,
+.timeline-page .status-under-review,
+.contribution-page .status-under-review {
   color: #8a5f1c;
 }
 
-.case-badges .status-disputed {
+.case-badges .status-disputed,
+.timeline-page .status-disputed,
+.contribution-page .status-disputed {
   color: #a04540;
 }
 
 .case-badges .status-confirmed,
-.case-badges .status-resolved {
+.case-badges .status-resolved,
+.timeline-page .status-confirmed,
+.timeline-page .status-resolved,
+.contribution-page .status-confirmed,
+.contribution-page .status-resolved {
   color: var(--green);
 }
 

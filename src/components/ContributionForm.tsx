@@ -15,12 +15,12 @@ export function ContributionForm({ incidentSlug, locale }: { incidentSlug: strin
     type: 'Bạn muốn đóng góp gì?', document: 'Tài liệu hoặc hồ sơ công', eyewitness: 'Lời kể trực tiếp', data: 'Đầu mối dữ liệu', correction: 'Đính chính thông tin', context: 'Bối cảnh bổ sung', other: 'Thông tin khác',
     title: 'Tiêu đề ngắn', titleHelp: 'Tóm tắt điều quan trọng nhất trong 5–180 ký tự.', details: 'Thông tin chi tiết', detailsHelp: 'Mô tả điều bạn biết, cách bạn biết và phần nào cần được kiểm chứng.',
     source: 'Liên kết tài liệu hoặc nguồn (không bắt buộc)', sourceHelp: 'Bản MVP nhận liên kết; chưa nhận tệp đính kèm nhạy cảm.', name: 'Tên hiển thị (không bắt buộc)', email: 'Email liên hệ riêng tư', emailHelp: 'Email không bao giờ được hiển thị công khai.',
-    publishName: 'Cho phép hiển thị tên của tôi nếu đóng góp được duyệt.', consent: 'Tôi đồng ý để ban biên tập xem xét, liên hệ và kiểm chứng thông tin này.', sending: 'Đang gửi…', submit: 'Gửi để xem xét',
+    publishName: 'Cho phép hiển thị tên của tôi nếu đóng góp được duyệt.', consent: 'Tôi đồng ý để ban biên tập xem xét, liên hệ và kiểm chứng thông tin này.', sending: 'Đang gửi…', submit: 'Gửi để xem xét', honeypot: 'Không điền vào ô này',
   } : {
     type: 'What would you like to contribute?', document: 'Document or public record', eyewitness: 'First-hand account', data: 'Data lead', correction: 'Correction', context: 'Additional context', other: 'Other information',
     title: 'Short title', titleHelp: 'Summarize the key point in 5–180 characters.', details: 'Details', detailsHelp: 'Describe what you know, how you know it, and what still needs verification.',
     source: 'Document or source link (optional)', sourceHelp: 'The MVP accepts links and does not yet accept sensitive file uploads.', name: 'Display name (optional)', email: 'Private contact email', emailHelp: 'Your email is never displayed publicly.',
-    publishName: 'Allow my name to be shown if this contribution is approved.', consent: 'I agree that the editorial team may review, contact me about, and verify this information.', sending: 'Sending…', submit: 'Submit for review',
+    publishName: 'Allow my name to be shown if this contribution is approved.', consent: 'I agree that the editorial team may review, contact me about, and verify this information.', sending: 'Sending…', submit: 'Submit for review', honeypot: 'Leave this field empty',
   }
 
   const fieldError = (field: ContributionField) =>
@@ -39,7 +39,7 @@ export function ContributionForm({ incidentSlug, locale }: { incidentSlug: strin
       <input name="incidentSlug" type="hidden" value={incidentSlug} />
       <input name="locale" type="hidden" value={locale} />
       <div className="form-honeypot">
-        <label htmlFor="website">Website</label>
+        <label htmlFor="website">{copy.honeypot}</label>
         <input autoComplete="off" id="website" name="website" tabIndex={-1} type="text" />
       </div>
 

@@ -172,8 +172,7 @@ describe('Collection access control', () => {
   })
 
   it('reviewers cannot review their own submissions', async () => {
-    // reviewer wrote... simulate by making reviewer the submitter: update as
-    // admin-free path is not available, so create via reviewer directly.
+    // Reviewers write under the same account, so create and submit as the reviewer.
     const ownArticle = await payload.create({
       collection: 'articles',
       user: reviewer,

@@ -138,28 +138,34 @@ export const getArticlesPage = cache(
   async (page = 1, limit = 12): Promise<Paginated<ArticleView>> => {
     try {
       const payload = await getPayload({ config })
-      const result = await payload.find({
-        collection: 'articles',
+      const query = {
+        collection: 'articles' as const,
         depth: 1,
         limit,
-        page,
         overrideAccess: false,
         sort: '-publishedAt',
-      })
+      }
+      let result = await payload.find({ ...query, page })
+      // Payload does not clamp out-of-range pages; refetch the last page so
+      // ?page=999 never renders an empty list with a nonsense header.
+      const totalPages = result.totalPages ?? 1
+      if (result.totalDocs > 0 && (result.page ?? 1) > totalPages) {
+        result = await payload.find({ ...query, page: totalPages })
+      }
       if (result.totalDocs > 0) {
         return {
           items: result.docs.map(mapArticle),
           page: result.page ?? 1,
           totalDocs: result.totalDocs,
-          totalPages: result.totalPages ?? 1,
+          totalPages,
         }
       }
-      if (!demoContentEnabled()) return emptyPage(page)
+      if (!demoContentEnabled()) return emptyPage(1)
     } catch (error) {
       console.error('[queries] getArticlesPage failed', error)
       if (!demoContentEnabled()) throw error
     }
-    return demoContentEnabled() ? paginateDemo(demoArticles, page, limit) : emptyPage(page)
+    return demoContentEnabled() ? paginateDemo(demoArticles, page, limit) : emptyPage(1)
   },
 )
 
@@ -233,30 +239,47 @@ export const getIncidentsPage = cache(
   ): Promise<Paginated<IncidentView>> => {
     try {
       const payload = await getPayload({ config })
-      const result = await payload.find({
-        collection: 'incidents',
+      const query = {
+        collection: 'incidents' as const,
         depth: 0,
         limit,
-        page,
         overrideAccess: false,
         sort: '-dateStart',
         ...(caseStatus ? { where: { caseStatus: { equals: caseStatus } } } : {}),
-      })
-      // An actively filtered empty result is real — never mix demo cases into it.
-      if (result.totalDocs > 0 || caseStatus) {
+      }
+      let result = await payload.find({ ...query, page })
+      // Payload does not clamp out-of-range pages; refetch the last page so
+      // ?page=999 never renders an empty list with a nonsense header.
+      const totalPages = result.totalPages ?? 1
+      if (result.totalDocs > 0 && (result.page ?? 1) > totalPages) {
+        result = await payload.find({ ...query, page: totalPages })
+      }
+      if (result.totalDocs > 0) {
         return {
           items: result.docs.map(mapIncident),
           page: result.page ?? 1,
           totalDocs: result.totalDocs,
-          totalPages: result.totalPages ?? 1,
+          totalPages,
         }
       }
-      if (!demoContentEnabled()) return emptyPage(page)
+      if (caseStatus) {
+        // Distinguish "no cases in this state" from "database is empty":
+        // only the latter may fall back to demo content, so filter badges
+        // and the list never disagree.
+        const overall = await payload.count({ collection: 'incidents', overrideAccess: false })
+        if (overall.totalDocs > 0 || !demoContentEnabled()) return emptyPage(1)
+        return paginateDemo(
+          demoIncidents.filter((incident) => incident.caseStatus === caseStatus),
+          page,
+          limit,
+        )
+      }
+      if (!demoContentEnabled()) return emptyPage(1)
     } catch (error) {
       console.error('[queries] getIncidentsPage failed', error)
       if (!demoContentEnabled()) throw error
     }
-    if (!demoContentEnabled()) return emptyPage(page)
+    if (!demoContentEnabled()) return emptyPage(1)
     const filtered = caseStatus
       ? demoIncidents.filter((incident) => incident.caseStatus === caseStatus)
       : demoIncidents

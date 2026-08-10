@@ -84,7 +84,8 @@ const guideCopy: Record<Locale, { navigation: string; note: string; guides: Guid
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getLocale()) === 'vi' ? 'Hướng dẫn' : 'Guides' }
+  const title = (await getLocale()) === 'vi' ? 'Hướng dẫn' : 'Guides'
+  return { title, alternates: { canonical: '/guides' }, openGraph: { title } }
 }
 
 export default async function GuidesPage() {
