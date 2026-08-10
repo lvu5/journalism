@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['tests/int/**/*.int.spec.ts'],
+    include: ['tests/int/**/*.int.spec.{ts,tsx}'],
     // Payload init and real Postgres round-trips are slower than unit tests.
     testTimeout: 30_000,
     hookTimeout: 90_000,
