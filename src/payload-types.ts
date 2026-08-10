@@ -201,6 +201,16 @@ export interface Article {
     note?: string | null;
     id?: string | null;
   }[];
+  /**
+   * Public corrections and clarifications. Never edit a published story silently — add a dated correction instead.
+   */
+  corrections?:
+    | {
+        note: string;
+        issuedAt: string;
+        id?: string | null;
+      }[]
+    | null;
   relatedIncidents?: (number | Incident)[] | null;
   topics?: ('public-spending' | 'environment' | 'justice' | 'labour' | 'land' | 'public-services')[] | null;
   /**
@@ -493,6 +503,13 @@ export interface ArticlesSelect<T extends boolean = true> {
         accessedAt?: T;
         archiveUrl?: T;
         note?: T;
+        id?: T;
+      };
+  corrections?:
+    | T
+    | {
+        note?: T;
+        issuedAt?: T;
         id?: T;
       };
   relatedIncidents?: T;
