@@ -5,6 +5,7 @@ import { useActionState } from 'react'
 import {
   initialContributionState,
   submitContribution,
+  type ContributionField,
 } from '@/app/(frontend)/incidents/[slug]/contribute/actions'
 import type { Locale } from '@/lib/i18n'
 
@@ -22,18 +23,36 @@ export function ContributionForm({ incidentSlug, locale }: { incidentSlug: strin
     publishName: 'Allow my name to be shown if this contribution is approved.', consent: 'I agree that the editorial team may review, contact me about, and verify this information.', sending: 'Sending…', submit: 'Submit for review',
   }
 
+  const fieldError = (field: ContributionField) =>
+    state.fieldErrors?.[field] ? (
+      <small className="form-field-error" id={`${field}-error`}>
+        {state.fieldErrors[field]}
+      </small>
+    ) : null
+
+  const describedBy = (field: ContributionField, helpId?: string) =>
+    [helpId, state.fieldErrors?.[field] ? `${field}-error` : null].filter(Boolean).join(' ') ||
+    undefined
+
   return (
     <form action={formAction} className="contribution-form">
       <input name="incidentSlug" type="hidden" value={incidentSlug} />
       <input name="locale" type="hidden" value={locale} />
-      <div className="form-honeypot" aria-hidden="true">
+      <div className="form-honeypot">
         <label htmlFor="website">Website</label>
         <input autoComplete="off" id="website" name="website" tabIndex={-1} type="text" />
       </div>
 
       <div className="form-field">
         <label htmlFor="contributionType">{copy.type}</label>
-        <select defaultValue="data-tip" id="contributionType" name="contributionType" required>
+        <select
+          aria-invalid={Boolean(state.fieldErrors?.contributionType)}
+          aria-describedby={describedBy('contributionType')}
+          defaultValue="data-tip"
+          id="contributionType"
+          name="contributionType"
+          required
+        >
           <option value="document">{copy.document}</option>
           <option value="eyewitness">{copy.eyewitness}</option>
           <option value="data-tip">{copy.data}</option>
@@ -41,35 +60,81 @@ export function ContributionForm({ incidentSlug, locale }: { incidentSlug: strin
           <option value="context">{copy.context}</option>
           <option value="other">{copy.other}</option>
         </select>
+        {fieldError('contributionType')}
       </div>
 
       <div className="form-field">
         <label htmlFor="title">{copy.title}</label>
-        <input id="title" maxLength={180} minLength={5} name="title" required type="text" />
-        <small>{copy.titleHelp}</small>
+        <input
+          aria-invalid={Boolean(state.fieldErrors?.title)}
+          aria-describedby={describedBy('title', 'title-help')}
+          id="title"
+          maxLength={180}
+          minLength={5}
+          name="title"
+          required
+          type="text"
+        />
+        <small id="title-help">{copy.titleHelp}</small>
+        {fieldError('title')}
       </div>
 
       <div className="form-field">
         <label htmlFor="description">{copy.details}</label>
-        <textarea id="description" maxLength={5000} minLength={30} name="description" required rows={12} />
-        <small>{copy.detailsHelp}</small>
+        <textarea
+          aria-invalid={Boolean(state.fieldErrors?.description)}
+          aria-describedby={describedBy('description', 'description-help')}
+          id="description"
+          maxLength={5000}
+          minLength={30}
+          name="description"
+          required
+          rows={12}
+        />
+        <small id="description-help">{copy.detailsHelp}</small>
+        {fieldError('description')}
       </div>
 
       <div className="form-field">
         <label htmlFor="sourceUrl">{copy.source}</label>
-        <input id="sourceUrl" name="sourceUrl" placeholder="https://" type="url" />
-        <small>{copy.sourceHelp}</small>
+        <input
+          aria-invalid={Boolean(state.fieldErrors?.sourceUrl)}
+          aria-describedby={describedBy('sourceUrl', 'sourceUrl-help')}
+          id="sourceUrl"
+          name="sourceUrl"
+          placeholder="https://"
+          type="url"
+        />
+        <small id="sourceUrl-help">{copy.sourceHelp}</small>
+        {fieldError('sourceUrl')}
       </div>
 
       <div className="form-grid">
         <div className="form-field">
           <label htmlFor="contributorName">{copy.name}</label>
-          <input id="contributorName" maxLength={100} name="contributorName" type="text" />
+          <input
+            aria-invalid={Boolean(state.fieldErrors?.contributorName)}
+            aria-describedby={describedBy('contributorName')}
+            id="contributorName"
+            maxLength={100}
+            name="contributorName"
+            type="text"
+          />
+          {fieldError('contributorName')}
         </div>
         <div className="form-field">
           <label htmlFor="contactEmail">{copy.email}</label>
-          <input autoComplete="email" id="contactEmail" name="contactEmail" required type="email" />
-          <small>{copy.emailHelp}</small>
+          <input
+            aria-invalid={Boolean(state.fieldErrors?.contactEmail)}
+            aria-describedby={describedBy('contactEmail', 'contactEmail-help')}
+            autoComplete="email"
+            id="contactEmail"
+            name="contactEmail"
+            required
+            type="email"
+          />
+          <small id="contactEmail-help">{copy.emailHelp}</small>
+          {fieldError('contactEmail')}
         </div>
       </div>
 
@@ -78,9 +143,16 @@ export function ContributionForm({ incidentSlug, locale }: { incidentSlug: strin
         <span>{copy.publishName}</span>
       </label>
       <label className="form-checkbox">
-        <input name="consentToReview" required type="checkbox" />
+        <input
+          aria-invalid={Boolean(state.fieldErrors?.consentToReview)}
+          aria-describedby={describedBy('consentToReview')}
+          name="consentToReview"
+          required
+          type="checkbox"
+        />
         <span>{copy.consent}</span>
       </label>
+      {fieldError('consentToReview')}
 
       {state.message && (
         <p className={`form-message form-message-${state.status}`} role="status">{state.message}</p>

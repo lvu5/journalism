@@ -3,9 +3,19 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
+export type ContributionField =
+  | 'consentToReview'
+  | 'contactEmail'
+  | 'contributionType'
+  | 'contributorName'
+  | 'description'
+  | 'sourceUrl'
+  | 'title'
+
 export type ContributionFormState = {
   status: 'idle' | 'success' | 'error'
   message: string
+  fieldErrors?: Partial<Record<ContributionField, string>>
 }
 
 export const initialContributionState: ContributionFormState = { status: 'idle', message: '' }
@@ -55,25 +65,53 @@ export async function submitContribution(
   const consentToReview = formData.get('consentToReview') === 'on'
 
   if (!incidentSlug || !contributionTypes.includes(contributionType as (typeof contributionTypes)[number])) {
-    return { status: 'error', message: message('Loại đóng góp hoặc hồ sơ không hợp lệ.', 'The contribution type or case is invalid.') }
+    return {
+      status: 'error',
+      message: message('Loại đóng góp hoặc hồ sơ không hợp lệ.', 'The contribution type or case is invalid.'),
+      fieldErrors: { contributionType: message('Loại đóng góp hoặc hồ sơ không hợp lệ.', 'The contribution type or case is invalid.') },
+    }
   }
   if (title.length < 5 || title.length > 180) {
-    return { status: 'error', message: message('Tiêu đề cần từ 5 đến 180 ký tự.', 'The title must be between 5 and 180 characters.') }
+    return {
+      status: 'error',
+      message: message('Tiêu đề cần từ 5 đến 180 ký tự.', 'The title must be between 5 and 180 characters.'),
+      fieldErrors: { title: message('Tiêu đề cần từ 5 đến 180 ký tự.', 'The title must be between 5 and 180 characters.') },
+    }
   }
   if (description.length < 30 || description.length > 5000) {
-    return { status: 'error', message: message('Nội dung cần từ 30 đến 5.000 ký tự.', 'The contribution must be between 30 and 5,000 characters.') }
+    return {
+      status: 'error',
+      message: message('Nội dung cần từ 30 đến 5.000 ký tự.', 'The contribution must be between 30 and 5,000 characters.'),
+      fieldErrors: { description: message('Nội dung cần từ 30 đến 5.000 ký tự.', 'The contribution must be between 30 and 5,000 characters.') },
+    }
   }
   if (contributorName.length > 100) {
-    return { status: 'error', message: message('Tên người đóng góp không được dài quá 100 ký tự.', 'The contributor name cannot exceed 100 characters.') }
+    return {
+      status: 'error',
+      message: message('Tên người đóng góp không được dài quá 100 ký tự.', 'The contributor name cannot exceed 100 characters.'),
+      fieldErrors: { contributorName: message('Tên người đóng góp không được dài quá 100 ký tự.', 'The contributor name cannot exceed 100 characters.') },
+    }
   }
   if (!/^\S+@\S+\.\S+$/.test(contactEmail)) {
-    return { status: 'error', message: message('Vui lòng nhập một địa chỉ email hợp lệ.', 'Enter a valid email address.') }
+    return {
+      status: 'error',
+      message: message('Vui lòng nhập một địa chỉ email hợp lệ.', 'Enter a valid email address.'),
+      fieldErrors: { contactEmail: message('Vui lòng nhập một địa chỉ email hợp lệ.', 'Enter a valid email address.') },
+    }
   }
   if (sourceUrl && !validHttpUrl(sourceUrl)) {
-    return { status: 'error', message: message('Liên kết nguồn phải bắt đầu bằng http:// hoặc https://.', 'The source link must begin with http:// or https://.') }
+    return {
+      status: 'error',
+      message: message('Liên kết nguồn phải bắt đầu bằng http:// hoặc https://.', 'The source link must begin with http:// or https://.'),
+      fieldErrors: { sourceUrl: message('Liên kết nguồn phải bắt đầu bằng http:// hoặc https://.', 'The source link must begin with http:// or https://.') },
+    }
   }
   if (!consentToReview) {
-    return { status: 'error', message: message('Bạn cần xác nhận để ban biên tập có thể xem xét thông tin.', 'You must consent before the editorial team can review this information.') }
+    return {
+      status: 'error',
+      message: message('Bạn cần xác nhận để ban biên tập có thể xem xét thông tin.', 'You must consent before the editorial team can review this information.'),
+      fieldErrors: { consentToReview: message('Bạn cần xác nhận để ban biên tập có thể xem xét thông tin.', 'You must consent before the editorial team can review this information.') },
+    }
   }
 
   try {
@@ -114,7 +152,8 @@ export async function submitContribution(
       status: 'success',
       message: message('Đã tiếp nhận. Ban biên tập sẽ sàng lọc và xác minh trước khi công bố.', 'Received. The editorial team will screen and verify the information before publication.'),
     }
-  } catch {
+  } catch (error) {
+    console.error('[contribute] submission failed', error)
     return {
       status: 'error',
       message: message('Chưa thể gửi thông tin lúc này. Vui lòng thử lại sau.', 'The information could not be submitted. Please try again later.'),
