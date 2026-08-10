@@ -11,6 +11,7 @@ import { Articles } from './collections/Articles'
 import { Incidents } from './collections/Incidents'
 import { Reviews } from './collections/Reviews'
 import { CommunityContributions } from './collections/CommunityContributions'
+import { AuditLogs } from './collections/AuditLogs'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -22,7 +23,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Articles, Incidents, CommunityContributions, Reviews, Media],
+  collections: [Users, Articles, Incidents, CommunityContributions, Reviews, Media, AuditLogs],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
