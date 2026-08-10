@@ -1,5 +1,6 @@
 import {
   slugField,
+  ValidationError,
   type CollectionBeforeChangeHook,
   type CollectionConfig,
   type Where,
@@ -14,16 +15,23 @@ const publicArticle: Where = {
   ],
 }
 
-const protectWorkflow: CollectionBeforeChangeHook = ({ data, operation, originalDoc, req }) => {
+const protectWorkflow: CollectionBeforeChangeHook = ({ collection, data, operation, originalDoc, req }) => {
   const user = getUser(req.user)
 
-  // Trusted server-side tasks such as the seed script may publish demo content.
+  // Unauthenticated local-API writes (e.g. seed scripts) may publish only when
+  // they explicitly opt in via context — otherwise force the story back to a
+  // non-public state so no future endpoint can publish by accident.
   if (!user) {
-    if (data._status === 'published' || data.workflowStatus === 'published') {
-      data._status = 'published'
-      data.workflowStatus = 'published'
-      data.publishedAt ||= new Date().toISOString()
+    if (req.context?.allowSystemPublish === true) {
+      if (data._status === 'published' || data.workflowStatus === 'published') {
+        data._status = 'published'
+        data.workflowStatus = 'published'
+        data.publishedAt ||= new Date().toISOString()
+      }
+      return data
     }
+    data._status = 'draft'
+    if (data.workflowStatus === 'published') data.workflowStatus = 'approved'
     return data
   }
 
@@ -57,7 +65,15 @@ const protectWorkflow: CollectionBeforeChangeHook = ({ data, operation, original
   const validTransition = nextStatus === previousStatus || nextStatus === 'submitted'
 
   if (!authorCanEdit || !validTransition) {
-    throw new Error('Authors can edit drafts and resubmit articles after requested changes.')
+    throw new ValidationError({
+      collection: collection?.slug,
+      errors: [
+        {
+          message: 'Authors can edit drafts and resubmit articles after requested changes.',
+          path: 'workflowStatus',
+        },
+      ],
+    })
   }
 
   data._status = 'draft'
@@ -258,6 +274,11 @@ export const Articles: CollectionConfig = {
       name: 'publishedAt',
       type: 'date',
       index: true,
+      access: {
+        // Set by the publish flow in protectWorkflow; only admins may set it directly.
+        create: ({ req }) => isAdmin(req.user),
+        update: ({ req }) => isAdmin(req.user),
+      },
       admin: { position: 'sidebar', date: { pickerAppearance: 'dayAndTime' } },
     },
     {
