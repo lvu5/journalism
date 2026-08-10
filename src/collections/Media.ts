@@ -73,7 +73,9 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: {
-    mimeTypes: ['image/*', 'application/pdf'],
+    // Explicit allowlist — no SVG: a script-bearing SVG served inline from
+    // our origin would be stored XSS against the admin session.
+    mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif', 'application/pdf'],
     modifyResponseHeaders: ({ headers }) => {
       // Serve PDFs as downloads instead of inline content on our origin.
       if (headers.get('Content-Type') === 'application/pdf') {

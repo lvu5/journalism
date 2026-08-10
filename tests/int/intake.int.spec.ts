@@ -157,22 +157,21 @@ describe('Community contribution intake', () => {
   })
 
   it('rate limits repeated submissions from the same source', async () => {
-    // The suite has already consumed part of the shared-IP allowance; fill the
-    // rest with distinct emails (the per-email cap is tighter) and expect the
-    // next call to be throttled by IP.
-    await submitContribution(
-      initialContributionState,
-      buildFormData({ title: 'Rate fill 1', contactEmail: `rate-1-${marker}@test.local` }),
-    )
-    const last = await submitContribution(
-      initialContributionState,
-      buildFormData({ title: 'Rate fill 2', contactEmail: `rate-2-${marker}@test.local` }),
-    )
-    expect(last.status).toBe('success')
+    // The suite has already consumed two IP-bucket slots (the valid and the
+    // closed-case submissions; validation failures and honeypots do not
+    // count). Fill the remaining three with distinct emails (the per-email
+    // cap is tighter) and expect the next call to be throttled by IP.
+    for (const n of [1, 2, 3]) {
+      const fill = await submitContribution(
+        initialContributionState,
+        buildFormData({ title: `Rate fill ${n}`, contactEmail: `rate-${n}-${marker}@test.local` }),
+      )
+      expect(fill.status).toBe('success')
+    }
 
     const blocked = await submitContribution(
       initialContributionState,
-      buildFormData({ title: 'Rate limited call', contactEmail: `rate-3-${marker}@test.local` }),
+      buildFormData({ title: 'Rate limited call', contactEmail: `rate-4-${marker}@test.local` }),
     )
     expect(blocked.status).toBe('error')
     expect(blocked.message).toMatch(/too many submissions/i)
