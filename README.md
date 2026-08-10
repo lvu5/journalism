@@ -113,6 +113,14 @@ pnpm test:int         # integration tests
 pnpm test:e2e         # browser tests
 ```
 
+Integration and browser tests never touch the development database. They use a dedicated `journalism_test` database (overridable via `TEST_DATABASE_URL`). Set it up once:
+
+```bash
+docker compose up -d
+docker exec journalism-postgres-1 psql -U journalism -c "CREATE DATABASE journalism_test"
+pnpm migrate:test
+```
+
 Run `pnpm generate:types` whenever a Payload collection or field changes.
 
 ## Before a public launch
