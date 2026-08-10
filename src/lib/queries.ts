@@ -13,6 +13,12 @@ import type {
 import { caseStatusLabels } from './content'
 import { demoArticles, demoContributions, demoIncidents } from './demo-content'
 
+// Demo content exists for local development and clearly-labelled previews.
+// In production it is only served when explicitly enabled, so a database
+// outage can never silently turn into fabricated reporting.
+export const demoContentEnabled = (): boolean =>
+  process.env.NODE_ENV !== 'production' || process.env.ENABLE_DEMO_CONTENT === 'true'
+
 const relationName = (value: unknown): string | null => {
   if (!value || typeof value !== 'object' || !('publicName' in value)) return null
   const name = value.publicName
@@ -83,6 +89,13 @@ export type Paginated<T> = {
   totalPages: number
 }
 
+const emptyPage = <T>(page: number): Paginated<T> => ({
+  items: [],
+  page,
+  totalDocs: 0,
+  totalPages: 1,
+})
+
 const paginateDemo = <T>(items: T[], page: number, limit: number): Paginated<T> => {
   const totalDocs = items.length
   const totalPages = Math.max(1, Math.ceil(totalDocs / limit))
@@ -108,11 +121,13 @@ export const getArticles = cache(async (limit = 12): Promise<ArticleView[]> => {
       sort: '-publishedAt',
     })
     if (result.docs.length) return result.docs.map(mapArticle)
+    if (!demoContentEnabled()) return []
   } catch (error) {
-    // The public shell remains useful while a new developer is starting PostgreSQL.
-    console.error('[queries] getArticles failed; serving demo content', error)
+    console.error('[queries] getArticles failed', error)
+    if (!demoContentEnabled()) throw error
   }
-  return demoArticles.slice(0, limit)
+  // The public shell remains useful while a new developer is starting PostgreSQL.
+  return demoContentEnabled() ? demoArticles.slice(0, limit) : []
 })
 
 export const getArticlesPage = cache(
@@ -135,11 +150,12 @@ export const getArticlesPage = cache(
           totalPages: result.totalPages ?? 1,
         }
       }
+      if (!demoContentEnabled()) return emptyPage(page)
     } catch (error) {
-      // Fall through to clearly marked demonstration content.
-      console.error('[queries] getArticlesPage failed; serving demo content', error)
+      console.error('[queries] getArticlesPage failed', error)
+      if (!demoContentEnabled()) throw error
     }
-    return paginateDemo(demoArticles, page, limit)
+    return demoContentEnabled() ? paginateDemo(demoArticles, page, limit) : emptyPage(page)
   },
 )
 
@@ -154,11 +170,14 @@ export const getArticleBySlug = cache(async (slug: string): Promise<ArticleView 
       where: { slug: { equals: slug } },
     })
     if (result.docs[0]) return mapArticle(result.docs[0])
+    if (!demoContentEnabled()) return null
   } catch (error) {
-    // Fall through to clearly marked demonstration content.
-    console.error('[queries] getArticleBySlug failed; serving demo content', error)
+    console.error('[queries] getArticleBySlug failed', error)
+    if (!demoContentEnabled()) throw error
   }
-  return demoArticles.find((article) => article.slug === slug) || null
+  return demoContentEnabled()
+    ? demoArticles.find((article) => article.slug === slug) || null
+    : null
 })
 
 // Explicit featured lookup: a featured story older than the latest N must
@@ -177,7 +196,8 @@ export const getFeaturedArticle = cache(async (): Promise<ArticleView | null> =>
     })
     return result.docs[0] ? mapArticle(result.docs[0]) : null
   } catch (error) {
-    console.error('[queries] getFeaturedArticle failed; serving demo content', error)
+    console.error('[queries] getFeaturedArticle failed', error)
+    if (!demoContentEnabled()) throw error
     return demoArticles.find((article) => article.featured) || null
   }
 })
@@ -193,11 +213,12 @@ export const getIncidents = cache(async (limit = 50): Promise<IncidentView[]> =>
       sort: '-dateStart',
     })
     if (result.docs.length) return result.docs.map(mapIncident)
+    if (!demoContentEnabled()) return []
   } catch (error) {
-    // Fall through to clearly marked demonstration content.
-    console.error('[queries] getIncidents failed; serving demo content', error)
+    console.error('[queries] getIncidents failed', error)
+    if (!demoContentEnabled()) throw error
   }
-  return demoIncidents.slice(0, limit)
+  return demoContentEnabled() ? demoIncidents.slice(0, limit) : []
 })
 
 export const getIncidentsPage = cache(
@@ -226,10 +247,12 @@ export const getIncidentsPage = cache(
           totalPages: result.totalPages ?? 1,
         }
       }
+      if (!demoContentEnabled()) return emptyPage(page)
     } catch (error) {
-      // Fall through to clearly marked demonstration content.
-      console.error('[queries] getIncidentsPage failed; serving demo content', error)
+      console.error('[queries] getIncidentsPage failed', error)
+      if (!demoContentEnabled()) throw error
     }
+    if (!demoContentEnabled()) return emptyPage(page)
     const filtered = caseStatus
       ? demoIncidents.filter((incident) => incident.caseStatus === caseStatus)
       : demoIncidents
@@ -240,6 +263,10 @@ export const getIncidentsPage = cache(
 export const getIncidentStatusCounts = cache(
   async (): Promise<Record<IncidentView['caseStatus'], number>> => {
     const statuses = Object.keys(caseStatusLabels.vi) as IncidentView['caseStatus'][]
+    const zeroCounts = Object.fromEntries(statuses.map((status) => [status, 0])) as Record<
+      IncidentView['caseStatus'],
+      number
+    >
     try {
       const payload = await getPayload({ config })
       const entries = await Promise.all(
@@ -255,10 +282,12 @@ export const getIncidentStatusCounts = cache(
       if (entries.some(([, total]) => total > 0)) {
         return Object.fromEntries(entries) as Record<IncidentView['caseStatus'], number>
       }
+      if (!demoContentEnabled()) return zeroCounts
     } catch (error) {
-      // Fall through to demonstration counts.
-      console.error('[queries] getIncidentStatusCounts failed; serving demo counts', error)
+      console.error('[queries] getIncidentStatusCounts failed', error)
+      if (!demoContentEnabled()) throw error
     }
+    if (!demoContentEnabled()) return zeroCounts
     return Object.fromEntries(
       statuses.map((status) => [
         status,
@@ -281,7 +310,8 @@ export const getFeaturedIncident = cache(async (): Promise<IncidentView | null> 
     })
     return result.docs[0] ? mapIncident(result.docs[0]) : null
   } catch (error) {
-    console.error('[queries] getFeaturedIncident failed; serving demo content', error)
+    console.error('[queries] getFeaturedIncident failed', error)
+    if (!demoContentEnabled()) throw error
     return demoIncidents.find((incident) => incident.featured) || null
   }
 })
@@ -313,11 +343,13 @@ export const getIncidentBySlug = cache(
           approvedContributions: contributionResult.docs.map(mapContribution),
         }
       }
+      if (!demoContentEnabled()) return null
     } catch (error) {
-      // Fall through to clearly marked demonstration content.
-      console.error('[queries] getIncidentBySlug failed; serving demo content', error)
+      console.error('[queries] getIncidentBySlug failed', error)
+      if (!demoContentEnabled()) throw error
     }
 
+    if (!demoContentEnabled()) return null
     const incident = demoIncidents.find((item) => item.slug === slug)
     if (!incident) return null
     return {
