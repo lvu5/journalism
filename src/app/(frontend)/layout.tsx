@@ -31,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: baseURL,
+    // Demo content is meant for development; if it is force-enabled in
+    // production, keep it out of search indexes (see src/lib/queries.ts).
+    robots: process.env.ENABLE_DEMO_CONTENT === 'true' ? { index: false, follow: false } : undefined,
     description,
     title: {
       default: 'Hồ Sơ Mở — Open Journalism',
