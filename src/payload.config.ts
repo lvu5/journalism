@@ -31,6 +31,14 @@ if (!DATABASE_URL) {
   throw new Error('DATABASE_URL is required (PostgreSQL connection string).')
 }
 
+// Without SMTP the email adapter falls back to ethereal.email, a third-party
+// mock service — password-reset links (and the staff addresses they embed)
+// must never leave via that path in production.
+const SMTP_HOST = process.env.SMTP_HOST
+if (process.env.NODE_ENV === 'production' && !SMTP_HOST) {
+  throw new Error('SMTP_HOST is required in production so transactional email uses a real provider.')
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -58,12 +66,13 @@ export default buildConfig({
     // so deploying a new container also migrates its database.
     prodMigrations: migrations,
   }),
-  // Transactional email (password recovery, verification). With SMTP_HOST set,
-  // mail goes out over SMTP; otherwise it is logged to the server console.
+  // Transactional email (password recovery, verification). SMTP_* is required
+  // in production; in development, mail goes to an Ethereal test inbox logged
+  // at boot.
   email: nodemailerAdapter({
     defaultFromAddress: process.env.SMTP_FROM || 'no-reply@example.com',
     defaultFromName: 'Hồ Sơ Mở',
-    ...(process.env.SMTP_HOST
+    ...(SMTP_HOST
       ? {
           transportOptions: {
             host: process.env.SMTP_HOST,

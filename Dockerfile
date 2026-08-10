@@ -36,6 +36,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # final image. Real values are provided to the runner at deploy time.
 ENV DATABASE_URL=postgres://localhost:5432/build-time-placeholder
 ENV PAYLOAD_SECRET=build-time-placeholder
+ENV SMTP_HOST=build-time-placeholder
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \

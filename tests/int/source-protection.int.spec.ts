@@ -6,7 +6,7 @@ import type { User } from '@/payload-types'
 
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 
-import { decryptField, encryptField, isEncrypted } from '@/lib/field-crypto'
+import { decryptField, encryptField, isEncrypted, tryDecryptField } from '@/lib/field-crypto'
 
 describe('field crypto', () => {
   it('round-trips values through AES-256-GCM', () => {
@@ -16,10 +16,14 @@ describe('field crypto', () => {
     expect(decryptField(encrypted)).toBe('source@example.org')
   })
 
-  it('is idempotent and refuses tampered ciphertext', () => {
+  it('is idempotent and fails soft on tampered ciphertext', () => {
     const encrypted = encryptField('a@b.c')
     expect(encryptField(encrypted)).toBe(encrypted)
-    expect(() => decryptField(`${encrypted.slice(0, -4)}AAAA`)).toThrow()
+    // Read paths never 500 on bad rows — placeholder + log instead.
+    expect(decryptField(`${encrypted.slice(0, -4)}AAAA`)).toBe('[undecryptable]')
+    // Validation paths get a strict null.
+    expect(tryDecryptField(`${encrypted.slice(0, -4)}AAAA`)).toBeNull()
+    expect(tryDecryptField('not-encrypted@example.org')).toBeNull()
   })
 })
 
@@ -121,14 +125,52 @@ describe('source protection', () => {
   })
 
   it('logs single-document PII reads by staff', async () => {
-    const logs = await payload.find({
+    const before = await payload.find({
       collection: 'audit-logs',
       overrideAccess: true,
       where: {
         and: [{ targetId: { equals: String(contributionId) } }, { action: { equals: 'pii-read' } }],
       },
     })
-    expect(logs.totalDocs).toBeGreaterThan(0)
+    await payload.findByID({
+      collection: 'community-contributions',
+      id: contributionId,
+      user: reviewer,
+      overrideAccess: false,
+    })
+    const after = await payload.find({
+      collection: 'audit-logs',
+      overrideAccess: true,
+      where: {
+        and: [{ targetId: { equals: String(contributionId) } }, { action: { equals: 'pii-read' } }],
+      },
+    })
+    expect(after.totalDocs).toBe(before.totalDocs + 1)
+  })
+
+  it('does not log a PII read for the read echo after an update', async () => {
+    const before = await payload.find({
+      collection: 'audit-logs',
+      overrideAccess: true,
+      where: {
+        and: [{ targetId: { equals: String(contributionId) } }, { action: { equals: 'pii-read' } }],
+      },
+    })
+    await payload.update({
+      collection: 'community-contributions',
+      id: contributionId,
+      user: reviewer,
+      overrideAccess: false,
+      data: { reviewStatus: 'needs-info' },
+    })
+    const after = await payload.find({
+      collection: 'audit-logs',
+      overrideAccess: true,
+      where: {
+        and: [{ targetId: { equals: String(contributionId) } }, { action: { equals: 'pii-read' } }],
+      },
+    })
+    expect(after.totalDocs).toBe(before.totalDocs)
   })
 
   it('logs review status changes', async () => {
@@ -150,7 +192,7 @@ describe('source protection', () => {
       },
     })
     expect(logs.totalDocs).toBeGreaterThan(0)
-    expect(logs.docs[0].details).toContain('received')
+    expect(logs.docs.some((log) => log.details?.includes('received'))).toBe(true)
   })
 
   it('audit logs cannot be created, edited, or deleted via the API', async () => {

@@ -14,6 +14,19 @@ export const Users: CollectionConfig = {
     lockTime: 10 * 60 * 1000,
     tokenExpiration: 2 * 60 * 60,
   },
+  hooks: {
+    beforeLogin: [
+      // Deactivated staff must not be able to log in. Note: existing JWTs
+      // remain valid until they expire (tokenExpiration) — for immediate
+      // revocation, see #44.
+      ({ user }) => {
+        if (user && 'active' in user && user.active === false) {
+          throw new Error('This account has been deactivated. Contact an administrator.')
+        }
+        return user
+      },
+    ],
+  },
   access: {
     admin: ({ req }) => Boolean(req.user),
     create: admins,
