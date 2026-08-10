@@ -4,7 +4,7 @@ import { ArticleCard } from '@/components/ArticleCard'
 import { IncidentCard } from '@/components/IncidentCard'
 import { formatDate } from '@/lib/content'
 import { getLocale } from '@/lib/get-locale'
-import { getArticles, getIncidents } from '@/lib/queries'
+import { getArticles, getFeaturedArticle, getFeaturedIncident, getIncidents } from '@/lib/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,10 +63,15 @@ export default async function HomePage() {
     submitDescription: 'Submit a Markdown draft, attach sources, and follow editorial feedback in one workflow.',
     authorArea: 'Open author area',
   }
-  const [articles, incidents] = await Promise.all([getArticles(6), getIncidents(4)])
-  const lead = articles.find((article) => article.featured) || articles[0]
+  const [articles, incidents, featuredArticle, featuredIncident] = await Promise.all([
+    getArticles(6),
+    getIncidents(4),
+    getFeaturedArticle(),
+    getFeaturedIncident(),
+  ])
+  const lead = featuredArticle || articles[0]
   const recent = articles.filter((article) => article.id !== lead.id).slice(0, 4)
-  const featuredIncident = incidents.find((incident) => incident.featured) || incidents[0]
+  const notableIncident = featuredIncident || incidents[0]
   const isDemo = articles.some((article) => article.isDemo) || incidents.some((incident) => incident.isDemo)
 
   return (
@@ -147,7 +152,7 @@ export default async function HomePage() {
             <h2 id="incident-heading">{copy.notable}</h2>
             <Link href="/incidents">{copy.openIndex} →</Link>
           </div>
-          <IncidentCard incident={featuredIncident} locale={locale} />
+          <IncidentCard incident={notableIncident} locale={locale} />
           <div className="incident-feature-footer">
             <p>{copy.statusNote}</p>
             <Link className="outline-link" href="/timeline">

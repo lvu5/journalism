@@ -1,8 +1,7 @@
-'use client'
-
-import { useState } from 'react'
+import Link from 'next/link'
 
 import { IncidentCard } from './IncidentCard'
+import { Pagination } from './Pagination'
 import {
   caseStatusDescriptions,
   caseStatusLabels,
@@ -10,14 +9,30 @@ import {
 } from '@/lib/content'
 import type { Locale } from '@/lib/i18n'
 
-type FilterValue = IncidentView['caseStatus'] | 'all'
+export type CaseStatusFilter = IncidentView['caseStatus'] | 'all'
 
-export function CaseFilter({ incidents, locale }: { incidents: IncidentView[]; locale: Locale }) {
-  const [activeFilter, setActiveFilter] = useState<FilterValue>('all')
+type CaseFilterProps = {
+  activeStatus: CaseStatusFilter
+  counts: Record<IncidentView['caseStatus'], number>
+  incidents: IncidentView[]
+  locale: Locale
+  page: number
+  totalDocs: number
+  totalPages: number
+}
+
+// Server-side filtering and pagination via search params: links make every
+// filtered view shareable and crawlable, and keep headings out of <button>s.
+export function CaseFilter({
+  activeStatus,
+  counts,
+  incidents,
+  locale,
+  page,
+  totalDocs,
+  totalPages,
+}: CaseFilterProps) {
   const lifecycle = Object.keys(caseStatusLabels[locale]) as IncidentView['caseStatus'][]
-  const visibleIncidents = activeFilter === 'all'
-    ? incidents
-    : incidents.filter((incident) => incident.caseStatus === activeFilter)
   const copy = locale === 'vi'
     ? {
         lifecycle: 'Vòng đời hồ sơ',
@@ -38,6 +53,14 @@ export function CaseFilter({ incidents, locale }: { incidents: IncidentView[]; l
         empty: 'There are no cases with this status.',
       }
 
+  const hrefForStatus = (status: CaseStatusFilter, pageNumber = 1) => {
+    const params = new URLSearchParams()
+    if (status !== 'all') params.set('status', status)
+    if (pageNumber > 1) params.set('page', String(pageNumber))
+    const query = params.toString()
+    return query ? `/incidents?${query}` : '/incidents'
+  }
+
   return (
     <>
       <section className="case-lifecycle" aria-labelledby="case-lifecycle-heading">
@@ -47,52 +70,55 @@ export function CaseFilter({ incidents, locale }: { incidents: IncidentView[]; l
             <span>{copy.publicStates}</span>
           </div>
           <div className="case-filter-controls">
-            <span aria-live="polite">{visibleIncidents.length} {copy.cases}</span>
-            <button
-              aria-pressed={activeFilter === 'all'}
+            <span aria-live="polite">{totalDocs} {copy.cases}</span>
+            <Link
+              aria-current={activeStatus === 'all' ? 'true' : undefined}
               className="case-filter-reset"
-              onClick={() => setActiveFilter('all')}
-              type="button"
+              href="/incidents"
             >
-              {activeFilter === 'all' ? copy.all : copy.clear}
-            </button>
+              {activeStatus === 'all' ? copy.all : copy.clear}
+            </Link>
           </div>
         </div>
         <div className="case-lifecycle-grid">
           {lifecycle.map((caseStatus, index) => {
-            const count = incidents.filter((incident) => incident.caseStatus === caseStatus).length
-            const isActive = activeFilter === caseStatus
+            const isActive = activeStatus === caseStatus
 
             return (
-              <button
+              <Link
+                aria-current={isActive ? 'true' : undefined}
                 aria-label={`${copy.filterBy} ${caseStatusLabels[locale][caseStatus]}`}
-                aria-pressed={isActive}
                 className={`case-filter-option${isActive ? ' is-active' : ''}`}
+                href={hrefForStatus(caseStatus)}
                 key={caseStatus}
-                onClick={() => setActiveFilter(caseStatus)}
-                type="button"
               >
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <div>
                   <h3>{caseStatusLabels[locale][caseStatus]}</h3>
                   <p>{caseStatusDescriptions[locale][caseStatus]}</p>
-                  <strong>{count} {copy.cases}</strong>
+                  <strong>{counts[caseStatus] ?? 0} {copy.cases}</strong>
                 </div>
-              </button>
+              </Link>
             )
           })}
         </div>
       </section>
 
       <div className="incident-list">
-        {visibleIncidents.length ? (
-          visibleIncidents.map((incident) => (
+        {incidents.length ? (
+          incidents.map((incident) => (
             <IncidentCard incident={incident} key={incident.id} locale={locale} />
           ))
         ) : (
           <p className="case-filter-empty">{copy.empty}</p>
         )}
       </div>
+      <Pagination
+        hrefForPage={(pageNumber) => hrefForStatus(activeStatus, pageNumber)}
+        locale={locale}
+        page={page}
+        totalPages={totalPages}
+      />
     </>
   )
 }
