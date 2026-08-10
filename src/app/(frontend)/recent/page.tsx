@@ -6,7 +6,8 @@ import { getLocale } from '@/lib/get-locale'
 import { getArticlesPage } from '@/lib/queries'
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getLocale()) === 'vi' ? 'Mới nhất' : 'Recent' }
+  const title = (await getLocale()) === 'vi' ? 'Mới nhất' : 'Recent'
+  return { title, alternates: { canonical: '/recent' }, openGraph: { title } }
 }
 export const dynamic = 'force-dynamic'
 

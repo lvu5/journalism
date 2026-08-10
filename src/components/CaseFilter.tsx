@@ -72,7 +72,7 @@ export function CaseFilter({
           <div className="case-filter-controls">
             <span aria-live="polite">{totalDocs} {copy.cases}</span>
             <Link
-              aria-current={activeStatus === 'all' ? 'true' : undefined}
+              aria-current={activeStatus === 'all' ? 'page' : undefined}
               className="case-filter-reset"
               href="/incidents"
             >
@@ -86,7 +86,7 @@ export function CaseFilter({
 
             return (
               <Link
-                aria-current={isActive ? 'true' : undefined}
+                aria-current={isActive ? 'page' : undefined}
                 aria-label={`${copy.filterBy} ${caseStatusLabels[locale][caseStatus]}`}
                 className={`case-filter-option${isActive ? ' is-active' : ''}`}
                 href={hrefForStatus(caseStatus)}

@@ -14,10 +14,15 @@ export async function generateMetadata(): Promise<Metadata> {
   // Prefer the configured site origin; request headers are only a local-dev
   // fallback, since Host/X-Forwarded-Host are client-spoofable.
   const envURL = process.env.NEXT_PUBLIC_SITE_URL
-  let baseURL: URL
+  let baseURL: URL | null = null
   if (envURL) {
-    baseURL = new URL(envURL)
-  } else {
+    try {
+      baseURL = new URL(envURL)
+    } catch {
+      console.error(`[metadata] NEXT_PUBLIC_SITE_URL is not a valid URL: ${envURL}`)
+    }
+  }
+  if (!baseURL) {
     const requestHeaders = await headers()
     const forwardedHost = requestHeaders.get('x-forwarded-host')?.split(',')[0]?.trim()
     const host = forwardedHost || requestHeaders.get('host') || 'localhost:3000'

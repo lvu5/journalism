@@ -76,27 +76,9 @@ export default async function HomePage() {
   const lead = featuredArticle || articles[0]
   const notableIncident = featuredIncident || incidents[0]
   const isDemo = articles.some((article) => article.isDemo) || incidents.some((incident) => incident.isDemo)
-
-  // Production with an empty database: show the newsroom shell, not a crash
-  // (demo content is disabled there unless explicitly enabled).
-  if (!lead || !notableIncident) {
-    return (
-      <section className="hero shell">
-        <div className="hero-copy">
-          <p className="section-kicker">{copy.kicker}</p>
-          <h1>
-            {copy.headline1}
-            <br />
-            <em>{copy.headline2}</em>
-          </h1>
-          <p className="hero-dek">{copy.intro}</p>
-          <p className="inline-demo-note">{copy.empty}</p>
-        </div>
-      </section>
-    )
-  }
-
-  const recent = articles.filter((article) => article.id !== lead.id).slice(0, 4)
+  // Degrade per section rather than collapsing the whole homepage when one
+  // content type is missing (e.g. first cases before the first article).
+  const recent = lead ? articles.filter((article) => article.id !== lead.id).slice(0, 4) : []
 
   return (
     <>
@@ -118,6 +100,7 @@ export default async function HomePage() {
             <em>{copy.headline2}</em>
           </h1>
           <p className="hero-dek">{copy.intro}</p>
+          {!lead && !notableIncident && <p className="inline-demo-note">{copy.empty}</p>}
         </div>
         <aside className="principles" aria-label={copy.principlesLabel}>
           <p className="principles-label">{copy.principles}</p>
@@ -129,6 +112,7 @@ export default async function HomePage() {
         </aside>
       </section>
 
+      {lead && (
       <section className="lead-story shell" aria-labelledby="lead-heading">
         <div className="section-heading">
           <p>{copy.featured}</p>
@@ -157,7 +141,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
+      {recent.length > 0 && (
       <section className="recent-section shell" aria-labelledby="recent-heading">
         <div className="section-heading section-heading-large">
           <h2 id="recent-heading">{copy.latest}</h2>
@@ -169,7 +155,9 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
+      {notableIncident && (
       <section className="incident-feature" aria-labelledby="incident-heading">
         <div className="shell">
           <div className="section-heading section-heading-dark">
@@ -185,6 +173,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       <section className="contribute shell">
         <p className="section-kicker">{copy.forAuthors}</p>
