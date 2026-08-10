@@ -61,6 +61,11 @@ COPY --from=builder /app/public ./public
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
+# Uploads land in /app/media (Payload's default staticDir); the directory is
+# root-owned without this, so the nextjs user cannot write uploads. Mount a
+# persistent volume at /app/media in real deployments or media is ephemeral.
+RUN mkdir -p /app/media && chown nextjs:nodejs /app/media
+
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
