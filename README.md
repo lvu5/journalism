@@ -125,6 +125,16 @@ Run `pnpm generate:types` whenever a Payload collection or field changes.
 
 Schema changes ship through migrations only — dev-mode schema push is disabled (`push: false`) because Payload's generated DDL cannot express the hand-tuned foreign-key delete rules. After changing a collection or field, run `pnpm payload migrate:create <change-name>` and commit both the migration and its `.json` snapshot; apply it locally with `pnpm payload migrate` and to the test database with `pnpm migrate:test`. A healthy check: `migrate:create` on an unchanged schema should report "No schema changes detected".
 
+## Terminal review queue (TUI)
+
+Reviewers and administrators can triage community contributions from the terminal:
+
+```bash
+pnpm tui
+```
+
+Sign in with a reviewer or admin account. The queue lists pending submissions; open one to screen it, request more information, approve it, mark it unused, toggle public display (approved only), or edit private reviewer notes. The TUI talks to Payload's local API with your user attached, so every server-side rule still applies: role checks, review workflow hooks, contact-email decryption only for staff, and the append-only audit log all work exactly as in the admin UI.
+
 ## Before a public launch
 
 - Add mandatory MFA or an MFA-capable identity provider for staff accounts.
