@@ -219,6 +219,32 @@ export const Articles: CollectionConfig = {
           ],
         },
         {
+          label: 'Corrections',
+          fields: [
+            {
+              name: 'corrections',
+              type: 'array',
+              labels: { singular: 'Correction', plural: 'Corrections' },
+              admin: {
+                description:
+                  'Public corrections and clarifications. Never edit a published story silently — add a dated correction instead.',
+                initCollapsed: true,
+              },
+              fields: [
+                { name: 'note', type: 'textarea', required: true, maxLength: 1000 },
+                {
+                  name: 'issuedAt',
+                  type: 'date',
+                  label: 'Issued at',
+                  required: true,
+                  defaultValue: () => new Date().toISOString(),
+                  admin: { date: { pickerAppearance: 'dayAndTime' } },
+                },
+              ],
+            },
+          ],
+        },
+        {
           label: 'Connections',
           fields: [
             {

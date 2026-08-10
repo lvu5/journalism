@@ -46,6 +46,10 @@ const mapArticle = (article: Article): ArticleView => ({
     archiveUrl: citation.archiveUrl,
     note: citation.note,
   })),
+  corrections: (article.corrections || []).map((correction) => ({
+    note: correction.note,
+    issuedAt: correction.issuedAt,
+  })),
   featured: article.featured || false,
 })
 
