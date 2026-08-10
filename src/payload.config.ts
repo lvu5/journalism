@@ -48,6 +48,12 @@ export default buildConfig({
     pool: {
       connectionString: DATABASE_URL,
     },
+    // Schema changes ship via migrations only. Dev-mode push would silently
+    // revert the hand-fixed FK delete rules (see
+    // 20260810_110000_fix_relationship_delete_rules) — Payload's generated DDL
+    // cannot express them. Run `pnpm payload migrate` after pulling, and
+    // `pnpm payload migrate:create <name>` after changing collections.
+    push: false,
     // Pending migrations run automatically when the production server boots,
     // so deploying a new container also migrates its database.
     prodMigrations: migrations,

@@ -123,6 +123,8 @@ pnpm migrate:test
 
 Run `pnpm generate:types` whenever a Payload collection or field changes.
 
+Schema changes ship through migrations only — dev-mode schema push is disabled (`push: false`) because Payload's generated DDL cannot express the hand-tuned foreign-key delete rules. After changing a collection or field, run `pnpm payload migrate:create <change-name>` and commit both the migration and its `.json` snapshot; apply it locally with `pnpm payload migrate` and to the test database with `pnpm migrate:test`. A healthy check: `migrate:create` on an unchanged schema should report "No schema changes detected".
+
 ## Before a public launch
 
 - Add mandatory MFA or an MFA-capable identity provider for staff accounts.
