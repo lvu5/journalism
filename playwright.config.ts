@@ -6,6 +6,16 @@ import { defineConfig, devices } from '@playwright/test'
  */
 import 'dotenv/config'
 
+// The Playwright runner process also talks to the database directly (seed
+// helpers call getPayload). Force the same test database the webServer uses,
+// before any helper imports the Payload config — otherwise seeding lands in
+// the development database (or crashes on the fail-fast env check).
+process.env.PAYLOAD_SECRET ||= 'e2e-test-secret-do-not-use-in-production'
+const testDatabaseURL =
+  process.env.TEST_DATABASE_URL ||
+  'postgres://journalism:journalism@127.0.0.1:5432/journalism_test'
+process.env.DATABASE_URL = testDatabaseURL
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -35,8 +45,7 @@ export default defineConfig({
   ],
   webServer: {
     // E2E tests seed and delete real users — never run them against the dev database.
-    command:
-      'cross-env DATABASE_URL=postgres://journalism:journalism@127.0.0.1:5432/journalism_test pnpm dev',
+    command: `cross-env DATABASE_URL=${testDatabaseURL} pnpm dev`,
     reuseExistingServer: !process.env.CI,
     url: 'http://localhost:3000',
   },
