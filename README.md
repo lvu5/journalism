@@ -129,7 +129,7 @@ Schema changes ship through migrations only — dev-mode schema push is disabled
 
 - Add mandatory MFA or an MFA-capable identity provider for staff accounts.
 - Configure a transactional email provider for verification and password recovery.
-- Move uploads to private S3-compatible storage and use signed access for unpublished files.
+- Move uploads to private S3-compatible storage and use signed access for unpublished files. Until then, mount a persistent volume at `/app/media` — the container's upload directory is writable by the app user but ephemeral without a volume.
 - Add rate limiting and bot protection to community intake, plus a WAF, encrypted off-site backups, and log redaction.
 - Replace the local database credentials and rotate `PAYLOAD_SECRET`.
 - Review publication, corrections, source-protection, and takedown policies with qualified local counsel.
