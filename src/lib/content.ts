@@ -20,8 +20,14 @@ export type ArticleView = {
   topics: string[]
   byline: string[]
   citations: CitationView[]
+  corrections: CorrectionView[]
   featured?: boolean
   isDemo?: boolean
+}
+
+export type CorrectionView = {
+  note: string
+  issuedAt: string
 }
 
 export type IncidentView = {

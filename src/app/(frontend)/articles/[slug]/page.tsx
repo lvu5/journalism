@@ -33,12 +33,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     back: 'Trở lại bài mới', demo: 'Nội dung minh họa — không phải tin thực tế.', author: 'Tác giả',
     editorial: 'Ban biên tập', eventDate: 'Ngày sự kiện', published: 'Xuất bản', sources: 'Nguồn',
     commitment: 'Cam kết biên tập', commitments: ['Nguyên văn tài liệu được ưu tiên.', 'Khoảng trống dữ liệu được ghi rõ.', 'Thay đổi sau xuất bản được lưu vết.'],
-    citations: 'Nguồn & tài liệu', items: 'mục', accessed: 'Truy cập', original: 'Nguồn gốc', archive: 'Bản lưu',
+    citations: 'Nguồn & tài liệu', items: 'mục', accessed: 'Truy cập', original: 'Nguồn gốc', archive: 'Bản lưu', corrections: 'Đính chính',
   } : {
     back: 'Back to recent', demo: 'Demonstration content — not real reporting.', author: 'Author',
     editorial: 'Editorial team', eventDate: 'Event date', published: 'Published', sources: 'Sources',
     commitment: 'Editorial commitment', commitments: ['Primary documents are preferred.', 'Data gaps are clearly stated.', 'Post-publication changes are recorded.'],
-    citations: 'Sources & documents', items: 'items', accessed: 'Accessed', original: 'Original source', archive: 'Archive',
+    citations: 'Sources & documents', items: 'items', accessed: 'Accessed', original: 'Original source', archive: 'Archive', corrections: 'Corrections',
   }
   const { slug } = await params
   const article = await getArticleBySlug(slug)
@@ -85,6 +85,22 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </ReactMarkdown>
         </div>
       </div>
+
+      {article.corrections.length > 0 && (
+        <section className="corrections shell" aria-labelledby="corrections-heading">
+          <h2 id="corrections-heading">{copy.corrections}</h2>
+          <ol>
+            {article.corrections.map((correction) => (
+              <li key={correction.issuedAt}>
+                <time dateTime={correction.issuedAt}>
+                  {formatDate(correction.issuedAt, true, locale)}
+                </time>
+                <p>{correction.note}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       <section className="citations shell" aria-labelledby="citations-heading">
         <div className="section-heading section-heading-large">
