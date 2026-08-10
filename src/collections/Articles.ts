@@ -6,6 +6,7 @@ import {
 } from 'payload'
 
 import { authenticated, getUser, hasRole, isAdmin, isReviewer } from '../access/roles'
+import { validateHttpUrl } from '../fields/validate-http-url'
 
 const publicArticle: Where = {
   and: [
@@ -183,14 +184,14 @@ export const Articles: CollectionConfig = {
               fields: [
                 { name: 'sourceTitle', type: 'text', required: true, maxLength: 240 },
                 { name: 'publisher', type: 'text', maxLength: 140 },
-                { name: 'url', type: 'text', required: true },
+                { name: 'url', type: 'text', required: true, validate: validateHttpUrl },
                 {
                   name: 'accessedAt',
                   type: 'date',
                   required: true,
                   admin: { date: { pickerAppearance: 'dayOnly' } },
                 },
-                { name: 'archiveUrl', type: 'text', label: 'Archived URL' },
+                { name: 'archiveUrl', type: 'text', label: 'Archived URL', validate: validateHttpUrl },
                 {
                   name: 'note',
                   type: 'textarea',

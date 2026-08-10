@@ -1,6 +1,7 @@
 import type { CollectionBeforeChangeHook, CollectionConfig, Where } from 'payload'
 
 import { isAdmin, isReviewer } from '../access/roles'
+import { validateHttpUrl } from '../fields/validate-http-url'
 
 const publicContributions: Where = {
   and: [
@@ -84,7 +85,7 @@ export const CommunityContributions: CollectionConfig = {
       maxLength: 5000,
       admin: { rows: 14 },
     },
-    { name: 'sourceUrl', type: 'text', label: 'Source or document URL' },
+    { name: 'sourceUrl', type: 'text', label: 'Source or document URL', validate: validateHttpUrl },
     {
       name: 'contributorName',
       type: 'text',
