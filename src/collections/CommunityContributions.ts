@@ -9,7 +9,7 @@ import type {
 
 import { isAdmin, isReviewer } from '../access/roles'
 import { validateHttpUrl } from '../fields/validate-http-url'
-import { decryptField, encryptField, isEncrypted } from '../lib/field-crypto'
+import { decryptField, encryptField, isEncrypted, tryDecryptField } from '../lib/field-crypto'
 
 const publicContributions: Where = {
   and: [
@@ -18,8 +18,10 @@ const publicContributions: Where = {
   ],
 }
 
-// Append-only audit trail (see the audit-logs collection). Never block the
-// editorial flow if logging itself fails — but do surface the error.
+// Append-only audit trail (see the audit-logs collection). Written on a
+// fresh connection (no `req` threading) so a failed audit insert can never
+// roll back the editorial update it accompanies. Never block the flow if
+// logging itself fails — but do surface the error.
 const writeAuditLog = async (
   req: PayloadRequest,
   action: 'contribution-status-change' | 'pii-read',
@@ -30,7 +32,6 @@ const writeAuditLog = async (
     await req.payload.create({
       collection: 'audit-logs',
       overrideAccess: true,
-      req,
       data: {
         action,
         actor: req.user?.id,
@@ -44,10 +45,11 @@ const writeAuditLog = async (
   }
 }
 
-// Log when a staff member opens an individual contribution (bulk list reads
-// are excluded to keep the log meaningful).
+// Log when a staff member opens an individual contribution. Excluded: bulk
+// list reads (findMany), and the read echo Payload runs after an update
+// (beforeChange marks the request so updates never masquerade as views).
 const auditPiiRead: CollectionAfterReadHook = async ({ doc, findMany, req }) => {
-  if (!findMany && req.user && doc.contactEmail) {
+  if (!findMany && req.user && doc.contactEmail && !req.context.skipPiiAudit) {
     await writeAuditLog(req, 'pii-read', doc.id)
   }
   return doc
@@ -73,6 +75,10 @@ const enforceReviewWorkflow: CollectionBeforeChangeHook = ({ data, operation, or
     data.approvedAt = null
     return data
   }
+
+  // Payload re-reads the document after an update; that echo must not log a
+  // PII view (see auditPiiRead).
+  req.context.skipPiiAudit = true
 
   if (!isReviewer(req.user)) return data
 
@@ -164,7 +170,11 @@ export const CommunityContributions: CollectionConfig = {
       required: true,
       validate: (value: unknown) => {
         if (typeof value !== 'string' || !value) return 'Enter a valid email address.'
-        if (isEncrypted(value)) return true
+        if (isEncrypted(value)) {
+          const plaintext = tryDecryptField(value)
+          if (plaintext === null) return 'Stored value cannot be decrypted.'
+          return /^\S+@\S+\.\S+$/.test(plaintext) || 'Enter a valid email address.'
+        }
         return /^\S+@\S+\.\S+$/.test(value) || 'Enter a valid email address.'
       },
       hooks: {
@@ -175,7 +185,10 @@ export const CommunityContributions: CollectionConfig = {
             typeof value === 'string' && value ? encryptField(value) : value,
         ],
         afterRead: [
-          ({ value }) => (typeof value === 'string' ? decryptField(value) : value),
+          // Anonymous reads never receive this field (access control strips
+          // it) — skip the decryption work entirely for them.
+          ({ req, value }) =>
+            typeof value === 'string' && req.user ? decryptField(value) : value,
         ],
       },
       access: {

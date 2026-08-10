@@ -212,8 +212,7 @@ describe('Collection access control', () => {
     await payload.delete({ collection: 'articles', id: ownArticle.id, overrideAccess: true })
   })
 
-  it('a second reviewer can approve, syncing the article workflow status', async () => {
-    const review = await payload.create({
+  it('a second reviewer can approve, syncing the article workflow status', async () => {    const review = await payload.create({
       collection: 'reviews',
       user: reviewer2,
       overrideAccess: false,
@@ -233,5 +232,40 @@ describe('Collection access control', () => {
     })
     expect(article.workflowStatus).toBe('approved')
     expect(article._status).toBe('draft') // only admins publish
+  })
+
+  it('deactivated users cannot log in', async () => {
+    const email = `deactivated-${marker}@test.local`
+    const user = (await payload.create({
+      collection: 'users',
+      overrideAccess: true,
+      data: {
+        email,
+        password: 'test-password-123',
+        publicName: 'Deactivated Author',
+        roles: ['author'],
+      },
+    })) as User
+
+    try {
+      const login = await payload.login({
+        collection: 'users',
+        data: { email, password: 'test-password-123' },
+      })
+      expect(login.user?.email).toBe(email)
+
+      await payload.update({
+        collection: 'users',
+        id: user.id,
+        overrideAccess: true,
+        data: { active: false },
+      })
+
+      await expect(
+        payload.login({ collection: 'users', data: { email, password: 'test-password-123' } }),
+      ).rejects.toThrow(/deactivated/i)
+    } finally {
+      await payload.delete({ collection: 'users', id: user.id, overrideAccess: true })
+    }
   })
 })
