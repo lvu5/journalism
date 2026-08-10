@@ -30,6 +30,12 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+# Payload's config is evaluated during `next build` and fails fast without
+# these; placeholders are scoped to the builder stage and never ship in the
+# final image. Real values are provided to the runner at deploy time.
+ENV DATABASE_URL=postgres://localhost:5432/build-time-placeholder
+ENV PAYLOAD_SECRET=build-time-placeholder
+
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
