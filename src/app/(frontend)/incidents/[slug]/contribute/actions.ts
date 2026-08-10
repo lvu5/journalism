@@ -1,7 +1,32 @@
 'use server'
 
 import config from '@payload-config'
+import { headers } from 'next/headers'
 import { getPayload } from 'payload'
+
+// Simple per-instance sliding-window throttle for the public intake. This is
+// intentionally modest: it stops scripted floods from a single source without
+// blocking a busy shared network (cafés, offices, carrier NAT). Deployments
+// with multiple instances need a shared store (Redis/KV) instead — see #1.
+const RATE_WINDOW_MS = 10 * 60 * 1000
+const RATE_MAX_PER_IP = 5
+const RATE_MAX_PER_EMAIL = 3
+const attempts = new Map<string, number[]>()
+
+const rateLimited = (key: string, max: number): boolean => {
+  const now = Date.now()
+  const timestamps = (attempts.get(key) || []).filter((t) => now - t < RATE_WINDOW_MS)
+  attempts.set(key, timestamps)
+  if (timestamps.length >= max) return true
+  timestamps.push(now)
+  // Bound memory: drop stale keys when the map grows large.
+  if (attempts.size > 5000) {
+    for (const [k, ts] of attempts) {
+      if (!ts.length || now - ts[ts.length - 1] > RATE_WINDOW_MS) attempts.delete(k)
+    }
+  }
+  return false
+}
 
 export type ContributionField =
   | 'consentToReview'
@@ -63,6 +88,27 @@ export async function submitContribution(
   const contactEmail = valueOf(formData, 'contactEmail').toLowerCase()
   const publishName = formData.get('publishName') === 'on'
   const consentToReview = formData.get('consentToReview') === 'on'
+
+  let ip = 'unknown'
+  try {
+    const requestHeaders = await headers()
+    ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  } catch {
+    // Non-request context (e.g. integration tests or scripts) — skip IP limiting.
+  }
+
+  if (
+    rateLimited(`ip:${ip}`, RATE_MAX_PER_IP) ||
+    rateLimited(`email:${contactEmail}`, RATE_MAX_PER_EMAIL)
+  ) {
+    return {
+      status: 'error',
+      message: message(
+        'Bạn đã gửi quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau ít phút.',
+        'Too many submissions in a short time. Please try again in a few minutes.',
+      ),
+    }
+  }
 
   if (!incidentSlug || !contributionTypes.includes(contributionType as (typeof contributionTypes)[number])) {
     return {

@@ -22,7 +22,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -34,8 +34,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
-    reuseExistingServer: true,
+    // E2E tests seed and delete real users — never run them against the dev database.
+    command:
+      'cross-env DATABASE_URL=postgres://journalism:journalism@127.0.0.1:5432/journalism_test pnpm dev',
+    reuseExistingServer: !process.env.CI,
     url: 'http://localhost:3000',
   },
 })

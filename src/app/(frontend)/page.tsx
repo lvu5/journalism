@@ -37,6 +37,7 @@ export default async function HomePage() {
     submitTitle: 'Có hồ sơ cần xem xét?',
     submitDescription: 'Gửi bản thảo bằng Markdown, đính kèm nguồn và theo dõi phản hồi của biên tập viên trong cùng một quy trình.',
     authorArea: 'Vào khu vực tác giả',
+    empty: 'Tòa soạn đang chuẩn bị những bài viết đầu tiên. Vui lòng quay lại sau.',
   } : {
     demoBadge: 'MVP demo',
     demo: 'The content below is demonstration data, not reporting about real events.',
@@ -64,6 +65,7 @@ export default async function HomePage() {
     submitTitle: 'Have a story for review?',
     submitDescription: 'Submit a Markdown draft, attach sources, and follow editorial feedback in one workflow.',
     authorArea: 'Open author area',
+    empty: 'The newsroom is preparing its first stories. Please check back soon.',
   }
   const [articles, incidents, featuredArticle, featuredIncident] = await Promise.all([
     getArticles(6),
@@ -72,9 +74,29 @@ export default async function HomePage() {
     getFeaturedIncident(),
   ])
   const lead = featuredArticle || articles[0]
-  const recent = articles.filter((article) => article.id !== lead.id).slice(0, 4)
   const notableIncident = featuredIncident || incidents[0]
   const isDemo = articles.some((article) => article.isDemo) || incidents.some((incident) => incident.isDemo)
+
+  // Production with an empty database: show the newsroom shell, not a crash
+  // (demo content is disabled there unless explicitly enabled).
+  if (!lead || !notableIncident) {
+    return (
+      <section className="hero shell">
+        <div className="hero-copy">
+          <p className="section-kicker">{copy.kicker}</p>
+          <h1>
+            {copy.headline1}
+            <br />
+            <em>{copy.headline2}</em>
+          </h1>
+          <p className="hero-dek">{copy.intro}</p>
+          <p className="inline-demo-note">{copy.empty}</p>
+        </div>
+      </section>
+    )
+  }
+
+  const recent = articles.filter((article) => article.id !== lead.id).slice(0, 4)
 
   return (
     <>
