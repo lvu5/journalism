@@ -11,21 +11,47 @@ import { getPayload } from 'payload'
 const RATE_WINDOW_MS = 10 * 60 * 1000
 const RATE_MAX_PER_IP = 5
 const RATE_MAX_PER_EMAIL = 3
+
+// Only trust X-Forwarded-For when a proxy we control appends it
+// (TRUSTED_PROXY=true). Otherwise all direct traffic shares one honest
+// bucket instead of trusting a client-spoofable header.
+const TRUSTED_PROXY = process.env.TRUSTED_PROXY === 'true'
+
 const attempts = new Map<string, number[]>()
+let lastSweep = 0
 
 const rateLimited = (key: string, max: number): boolean => {
   const now = Date.now()
-  const timestamps = (attempts.get(key) || []).filter((t) => now - t < RATE_WINDOW_MS)
-  attempts.set(key, timestamps)
+  // Full sweep periodically and whenever the map grows — stale keys can never
+  // accumulate, and in-window floods cannot grow it unbounded.
+  if (now - lastSweep > RATE_WINDOW_MS || attempts.size > 500) {
+    for (const [k, ts] of attempts) {
+      const fresh = ts.filter((t) => now - t < RATE_WINDOW_MS)
+      if (fresh.length) attempts.set(k, fresh)
+      else attempts.delete(k)
+    }
+    lastSweep = now
+  }
+  const timestamps = attempts.get(key) || []
   if (timestamps.length >= max) return true
   timestamps.push(now)
-  // Bound memory: drop stale keys when the map grows large.
-  if (attempts.size > 5000) {
-    for (const [k, ts] of attempts) {
-      if (!ts.length || now - ts[ts.length - 1] > RATE_WINDOW_MS) attempts.delete(k)
-    }
-  }
+  attempts.set(key, timestamps)
   return false
+}
+
+// The IP key is honest by construction: without a trusted proxy we cannot
+// know the client address at all, so all direct traffic shares one bucket.
+const clientIp = async (): Promise<string> => {
+  try {
+    const requestHeaders = await headers()
+    if (!TRUSTED_PROXY) return 'direct'
+    // With a proxy that appends (proxy_add_x_forwarded_for), the rightmost
+    // hop is the one our proxy added; anything to its left is client input.
+    return requestHeaders.get('x-forwarded-for')?.split(',').at(-1)?.trim() || 'direct'
+  } catch {
+    // Non-request context (integration tests, scripts).
+    return 'direct'
+  }
 }
 
 export type ContributionField =
@@ -89,27 +115,6 @@ export async function submitContribution(
   const publishName = formData.get('publishName') === 'on'
   const consentToReview = formData.get('consentToReview') === 'on'
 
-  let ip = 'unknown'
-  try {
-    const requestHeaders = await headers()
-    ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  } catch {
-    // Non-request context (e.g. integration tests or scripts) — skip IP limiting.
-  }
-
-  if (
-    rateLimited(`ip:${ip}`, RATE_MAX_PER_IP) ||
-    rateLimited(`email:${contactEmail}`, RATE_MAX_PER_EMAIL)
-  ) {
-    return {
-      status: 'error',
-      message: message(
-        'Bạn đã gửi quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau ít phút.',
-        'Too many submissions in a short time. Please try again in a few minutes.',
-      ),
-    }
-  }
-
   if (!incidentSlug || !contributionTypes.includes(contributionType as (typeof contributionTypes)[number])) {
     return {
       status: 'error',
@@ -157,6 +162,22 @@ export async function submitContribution(
       status: 'error',
       message: message('Bạn cần xác nhận để ban biên tập có thể xem xét thông tin.', 'You must consent before the editorial team can review this information.'),
       fieldErrors: { consentToReview: message('Bạn cần xác nhận để ban biên tập có thể xem xét thông tin.', 'You must consent before the editorial team can review this information.') },
+    }
+  }
+
+  // Rate limiting runs after validation so form mistakes never consume quota,
+  // but before any database work so floods stay cheap.
+  const ip = await clientIp()
+  if (
+    rateLimited(`ip:${ip}`, RATE_MAX_PER_IP) ||
+    rateLimited(`email:${contactEmail}`, RATE_MAX_PER_EMAIL)
+  ) {
+    return {
+      status: 'error',
+      message: message(
+        'Bạn đã gửi quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau ít phút.',
+        'Too many submissions in a short time. Please try again in a few minutes.',
+      ),
     }
   }
 
