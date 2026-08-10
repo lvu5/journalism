@@ -89,7 +89,7 @@ An editor can enable community intake on any case except a closed case. Public s
                               ↘ Không sử dụng
 ```
 
-Raw writes to the contribution collection are blocked. The server-side intake validates the case and form, sets every submission to `Received`, and prevents public display until a reviewer both approves it and selects `Show on the public case page`. Contact email, consent records, and reviewer notes stay private.
+Raw writes to the contribution collection are blocked. The server-side intake validates the case and form, sets every submission to `Received`, and prevents public display until a reviewer both approves it and selects `Show on the public case page`. Contact email, consent records, and reviewer notes stay private. Contact emails are encrypted at rest (AES-256-GCM, key derived from `PAYLOAD_SECRET`), and staff views of individual submissions plus every review-status change are recorded in an append-only audit log (admins can read it; nobody can edit or delete entries).
 
 The MVP accepts source links rather than file uploads. Add a secure, encrypted document-drop workflow before asking sources to submit sensitive files.
 

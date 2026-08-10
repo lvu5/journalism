@@ -12,6 +12,7 @@ import { Articles } from './collections/Articles'
 import { Incidents } from './collections/Incidents'
 import { Reviews } from './collections/Reviews'
 import { CommunityContributions } from './collections/CommunityContributions'
+import { AuditLogs } from './collections/AuditLogs'
 import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
@@ -37,7 +38,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Articles, Incidents, CommunityContributions, Reviews, Media],
+  collections: [Users, Articles, Incidents, CommunityContributions, Reviews, Media, AuditLogs],
   editor: lexicalEditor(),
   secret: PAYLOAD_SECRET,
   typescript: {
