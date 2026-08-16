@@ -7,8 +7,9 @@ const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
-  // Required by the Dockerfile, which copies .next/standalone into the runner image.
-  output: 'standalone',
+  // Required by Docker, but Vercel performs its own output tracing and must
+  // receive the normal Next.js build output.
+  output: process.env.VERCEL === '1' ? undefined : 'standalone',
   poweredByHeader: false,
   images: {
     localPatterns: [

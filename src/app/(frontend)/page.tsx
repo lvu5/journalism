@@ -11,8 +11,6 @@ export const dynamic = 'force-dynamic'
 export default async function HomePage() {
   const locale = await getLocale()
   const copy = locale === 'vi' ? {
-    demoBadge: 'Bản MVP',
-    demo: 'Nội dung bên dưới là dữ liệu minh họa, không phải sự kiện có thật.',
     kicker: 'Một tòa soạn mở cho những câu hỏi khó',
     headline1: 'Bằng chứng trước.',
     headline2: 'Kết luận sau.',
@@ -39,8 +37,6 @@ export default async function HomePage() {
     authorArea: 'Vào khu vực tác giả',
     empty: 'Tòa soạn đang chuẩn bị những bài viết đầu tiên. Vui lòng quay lại sau.',
   } : {
-    demoBadge: 'MVP demo',
-    demo: 'The content below is demonstration data, not reporting about real events.',
     kicker: 'An open newsroom for difficult questions',
     headline1: 'Evidence first.',
     headline2: 'Conclusions later.',
@@ -75,22 +71,12 @@ export default async function HomePage() {
   ])
   const lead = featuredArticle || articles[0]
   const notableIncident = featuredIncident || incidents[0]
-  const isDemo = articles.some((article) => article.isDemo) || incidents.some((incident) => incident.isDemo)
   // Degrade per section rather than collapsing the whole homepage when one
   // content type is missing (e.g. first cases before the first article).
   const recent = lead ? articles.filter((article) => article.id !== lead.id).slice(0, 4) : []
 
   return (
     <>
-      {isDemo && (
-        <div className="demo-notice" role="note">
-          <div className="shell">
-            <strong>{copy.demoBadge}</strong>
-            <span>{copy.demo}</span>
-          </div>
-        </div>
-      )}
-
       <section className="hero shell">
         <div className="hero-copy">
           <p className="section-kicker">{copy.kicker}</p>

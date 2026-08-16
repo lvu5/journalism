@@ -134,6 +134,10 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   publicName: string;
+  /**
+   * Managed by the public author sign-in flow. Do not edit manually.
+   */
+  supabaseUserId?: string | null;
   bio?: string | null;
   /**
    * Reviewers can also write. Only administrators can change roles.
@@ -325,6 +329,7 @@ export interface Media {
   caption?: string | null;
   visibility: 'private' | 'public';
   uploadedBy?: (number | null) | User;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -456,6 +461,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   publicName?: T;
+  supabaseUserId?: T;
   bio?: T;
   roles?: T;
   active?: T;
@@ -597,6 +603,7 @@ export interface MediaSelect<T extends boolean = true> {
   caption?: T;
   visibility?: T;
   uploadedBy?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

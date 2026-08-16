@@ -17,7 +17,7 @@ type Guide = {
 const guideCopy: Record<Locale, { navigation: string; note: string; guides: Guide[] }> = {
   vi: {
     navigation: 'Chọn hướng dẫn',
-    note: 'Không gửi mật khẩu, dữ liệu đăng nhập hoặc tài liệu có thể khiến bạn gặp nguy hiểm. Bản MVP chỉ nhận liên kết.',
+    note: 'Không gửi mật khẩu, dữ liệu đăng nhập hoặc tài liệu có thể khiến bạn gặp nguy hiểm. Hiện tại hệ thống chỉ nhận liên kết.',
     guides: [
       {
         id: 'review', audience: 'Dành cho người duyệt', title: 'Duyệt bài', description: 'Kiểm tra nội dung, nguồn và gửi quyết định biên tập.', action: 'Mở danh sách bài', href: '/admin/collections/articles',
@@ -50,7 +50,7 @@ const guideCopy: Record<Locale, { navigation: string; note: string; guides: Guid
   },
   en: {
     navigation: 'Choose a guide',
-    note: 'Do not submit passwords, login details, or documents that could put you at risk. The MVP accepts links only.',
+    note: 'Do not submit passwords, login details, or documents that could put you at risk. The system currently accepts links only.',
     guides: [
       {
         id: 'review', audience: 'For reviewers', title: 'Review an article', description: 'Check the reporting and sources, then submit an editorial decision.', action: 'Open article list', href: '/admin/collections/articles',

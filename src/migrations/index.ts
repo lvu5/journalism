@@ -3,6 +3,8 @@ import * as migration_20260807_222618_case_lifecycle_and_contributions from './2
 import * as migration_20260810_110000_fix_relationship_delete_rules from './20260810_110000_fix_relationship_delete_rules'
 import * as migration_20260810_124622_article_corrections from './20260810_124622_article_corrections'
 import * as migration_20260810_135605_audit_logs_and_field_crypto from './20260810_135605_audit_logs_and_field_crypto'
+import * as migration_20260815_150657_add_supabase_author_identity from './20260815_150657_add_supabase_author_identity'
+import * as migration_20260816_084007_add_cloud_media_prefix from './20260816_084007_add_cloud_media_prefix'
 
 export const migrations = [
   {
@@ -30,4 +32,14 @@ export const migrations = [
     down: migration_20260810_135605_audit_logs_and_field_crypto.down,
     name: '20260810_135605_audit_logs_and_field_crypto',
   },
-];
+  {
+    up: migration_20260815_150657_add_supabase_author_identity.up,
+    down: migration_20260815_150657_add_supabase_author_identity.down,
+    name: '20260815_150657_add_supabase_author_identity',
+  },
+  {
+    up: migration_20260816_084007_add_cloud_media_prefix.up,
+    down: migration_20260816_084007_add_cloud_media_prefix.down,
+    name: '20260816_084007_add_cloud_media_prefix',
+  },
+]

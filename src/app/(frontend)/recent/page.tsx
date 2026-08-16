@@ -23,11 +23,6 @@ export default async function RecentPage({ searchParams }: RecentPageProps) {
 
   return (
     <div className="listing-page shell">
-      {items.some((article) => article.isDemo) && (
-        <p className="inline-demo-note">
-          {locale === 'vi' ? 'Dữ liệu minh họa cho bản MVP — không phải tin thực tế.' : 'MVP demonstration content — not reporting about real events.'}
-        </p>
-      )}
       <div className="article-list listing-articles">
         {items.map((article, index) => (
           <ArticleCard article={article} index={index} key={article.id} locale={locale} />

@@ -10,6 +10,10 @@ export const Users: CollectionConfig = {
     group: 'People & access',
   },
   auth: {
+    cookies: {
+      sameSite: 'Lax',
+      secure: process.env.NODE_ENV === 'production',
+    },
     maxLoginAttempts: 5,
     lockTime: 10 * 60 * 1000,
     tokenExpiration: 2 * 60 * 60,
@@ -28,7 +32,7 @@ export const Users: CollectionConfig = {
     ],
   },
   access: {
-    admin: ({ req }) => Boolean(req.user),
+    admin: ({ req }) => isAdmin(req.user) || hasRole(req.user, ['reviewer']),
     create: admins,
     delete: admins,
     read: ({ req }) => {
@@ -50,6 +54,23 @@ export const Users: CollectionConfig = {
       label: 'Public name',
       required: true,
       maxLength: 100,
+    },
+    {
+      name: 'supabaseUserId',
+      type: 'text',
+      label: 'Supabase user ID',
+      unique: true,
+      index: true,
+      access: {
+        create: ({ req }) => isAdmin(req.user),
+        read: ({ req }) => isAdmin(req.user),
+        update: ({ req }) => isAdmin(req.user),
+      },
+      admin: {
+        description: 'Managed by the public author sign-in flow. Do not edit manually.',
+        position: 'sidebar',
+        readOnly: true,
+      },
     },
     {
       name: 'bio',

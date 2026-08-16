@@ -10,9 +10,9 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       <div className="shell footer-grid">
         <div>
           <p className="footer-brand">HỒ SƠ MỞ</p>
-          <p className="footer-mission">
+          {/* <p className="footer-mission">
             {copy.footerMission}
-          </p>
+          </p> */}
         </div>
         <div className="footer-links">
           <Link href="/recent">{copy.recent}</Link>
@@ -24,7 +24,6 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       </div>
       <div className="shell footer-meta">
         <span>© 2026 Open Journalism</span>
-        <span>{copy.demoFooter}</span>
       </div>
     </footer>
   )
