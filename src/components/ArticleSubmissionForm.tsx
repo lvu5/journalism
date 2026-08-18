@@ -3,17 +3,18 @@
 import { useActionState, useRef, useState } from 'react'
 
 import { submitArticle } from '@/app/(frontend)/author/articles/new/actions'
+import { MarkdownEditor } from '@/components/MarkdownEditor'
 import { initialArticleSubmissionState, type ArticleField } from '@/lib/article-submission-state'
 import type { Locale } from '@/lib/i18n'
 
-type CitationRow = { id: number }
+type CitationRow = { id: number; key: string }
 
 export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
   const [state, formAction, isPending] = useActionState(
     submitArticle,
     initialArticleSubmissionState,
   )
-  const [citationRows, setCitationRows] = useState<CitationRow[]>([{ id: 0 }])
+  const [citationRows, setCitationRows] = useState<CitationRow[]>([{ id: 0, key: '' }])
   const nextCitationID = useRef(1)
   const copy =
     locale === 'vi'
@@ -72,11 +73,15 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
   const addCitation = () => {
     const id = nextCitationID.current
     nextCitationID.current += 1
-    setCitationRows((rows) => [...rows, { id }])
+    setCitationRows((rows) => [...rows, { id, key: '' }])
   }
 
   const removeCitation = (id: number) => {
     setCitationRows((rows) => rows.filter((row) => row.id !== id))
+  }
+
+  const updateCitationKey = (id: number, key: string) => {
+    setCitationRows((rows) => rows.map((row) => (row.id === id ? { ...row, key } : row)))
   }
 
   return (
@@ -121,14 +126,14 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
       </div>
       <div className="form-field">
         <label htmlFor="bodyMarkdown">{copy.body}</label>
-        <textarea
-          aria-invalid={Boolean(state.fieldErrors?.bodyMarkdown)}
+        <MarkdownEditor
+          ariaInvalid={Boolean(state.fieldErrors?.bodyMarkdown)}
+          citationKeys={citationRows.map((row) => row.key)}
           id="bodyMarkdown"
           maxLength={100000}
           minLength={100}
           name="bodyMarkdown"
-          required
-          rows={20}
+          locale={locale}
         />
         <small>
           {copy.bodyHelp} <code>{'\\cite{court-record}'}</code> {locale === 'vi' ? 'hoặc' : 'or'}{' '}
@@ -177,6 +182,8 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
                     required
                     spellCheck={false}
                     type="text"
+                    value={row.key}
+                    onChange={(event) => updateCitationKey(row.id, event.target.value)}
                   />
                   <small>{copy.citationKeyHelp}</small>
                 </div>

@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { ArticleSubmissionForm } from '@/components/ArticleSubmissionForm'
+
+afterEach(cleanup)
 
 describe('Article submission citation rows', () => {
   it('adds and removes repeatable citation sources', () => {
@@ -13,5 +15,29 @@ describe('Article submission citation rows', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0])
     expect(screen.getAllByLabelText('Source key')).toHaveLength(1)
+  })
+
+  it('provides Markdown formatting controls and a rendered citation preview', () => {
+    render(<ArticleSubmissionForm locale="en" />)
+    const editor = screen.getByLabelText('Article (Markdown)')
+    const sourceKey = screen.getByLabelText('Source key')
+
+    fireEvent.click(screen.getByTitle('Citation'))
+    expect((editor as HTMLTextAreaElement).value).toBe(String.raw`\cite{source-key}`)
+
+    fireEvent.change(sourceKey, { target: { value: 'court-record' } })
+    fireEvent.change(editor, {
+      target: {
+        value: String.raw`## Finding
+
+The record supports this statement. \cite{court-record}`,
+      },
+    })
+    fireEvent.click(screen.getByRole('tab', { name: 'Preview' }))
+
+    expect(screen.getByRole('heading', { name: 'Finding' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: '[1]' }).getAttribute('href')).toBe(
+      '#citation-court-record',
+    )
   })
 })
