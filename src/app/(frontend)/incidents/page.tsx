@@ -37,11 +37,6 @@ export default async function IncidentsPage({ searchParams }: IncidentsPageProps
 
   return (
     <div className="listing-page shell">
-      {items.some((incident) => incident.isDemo) && (
-        <p className="inline-demo-note">
-          {locale === 'vi' ? 'Dữ liệu minh họa cho bản MVP — không phải sự kiện có thật.' : 'MVP demonstration data — not real cases.'}
-        </p>
-      )}
       <CaseFilter
         activeStatus={activeStatus}
         counts={counts}

@@ -30,12 +30,12 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const locale = await getLocale()
   const copy = locale === 'vi' ? {
-    back: 'Trở lại bài mới', demo: 'Nội dung minh họa — không phải tin thực tế.', author: 'Tác giả',
+    back: 'Trở lại bài mới', author: 'Tác giả',
     editorial: 'Ban biên tập', eventDate: 'Ngày sự kiện', published: 'Xuất bản', sources: 'Nguồn',
     commitment: 'Cam kết biên tập', commitments: ['Nguyên văn tài liệu được ưu tiên.', 'Khoảng trống dữ liệu được ghi rõ.', 'Thay đổi sau xuất bản được lưu vết.'],
     citations: 'Nguồn & tài liệu', items: 'mục', accessed: 'Truy cập', original: 'Nguồn gốc', archive: 'Bản lưu', corrections: 'Đính chính',
   } : {
-    back: 'Back to recent', demo: 'Demonstration content — not real reporting.', author: 'Author',
+    back: 'Back to recent', author: 'Author',
     editorial: 'Editorial team', eventDate: 'Event date', published: 'Published', sources: 'Sources',
     commitment: 'Editorial commitment', commitments: ['Primary documents are preferred.', 'Data gaps are clearly stated.', 'Post-publication changes are recorded.'],
     citations: 'Sources & documents', items: 'items', accessed: 'Accessed', original: 'Original source', archive: 'Archive', corrections: 'Corrections',
@@ -48,7 +48,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <article className="story-page">
       <header className="story-header shell">
         <Link className="back-link" href="/recent">← {copy.back}</Link>
-        {article.isDemo && <p className="inline-demo-note">{copy.demo}</p>}
         <div className="story-taxonomy">
           {article.topics.map((topic) => <span key={topic}>{topicLabels[locale][topic] || topic}</span>)}
         </div>

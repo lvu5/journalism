@@ -33,14 +33,14 @@ export async function generateMetadata({ params }: CasePageProps): Promise<Metad
 export default async function CasePage({ params }: CasePageProps) {
   const locale = await getLocale()
   const copy = locale === 'vi' ? {
-    back: 'Trở lại danh sách hồ sơ', demo: 'Hồ sơ minh họa — không phải sự kiện có thật.', tracking: 'Bắt đầu theo dõi',
+    back: 'Trở lại danh sách hồ sơ', tracking: 'Bắt đầu theo dõi',
     location: 'Địa điểm', undisclosed: 'Chưa công bố', sources: 'Nguồn', approvedCount: 'Đóng góp đã duyệt',
     caseStatus: 'Trạng thái hồ sơ', contribute: 'Đóng góp thông tin', editorialNote: 'Ghi chú biên tập', notable: 'Vì sao đáng chú ý?',
     principle: 'Nguyên tắc', principleItems: ['Đáng chú ý không đồng nghĩa với kết luận sai phạm.', 'Thông tin cộng đồng chỉ xuất hiện sau khi được xem xét và xác minh.'],
     approved: 'Đóng góp đã duyệt', items: 'mục', anonymous: 'Ẩn danh', viewSource: 'Xem nguồn', empty: 'Chưa có đóng góp cộng đồng nào được duyệt để công bố.',
     accessed: 'Truy cập', original: 'Nguồn gốc', archive: 'Bản lưu',
   } : {
-    back: 'Back to cases', demo: 'Demonstration case — not a real event.', tracking: 'Tracking started',
+    back: 'Back to cases', tracking: 'Tracking started',
     location: 'Location', undisclosed: 'Not disclosed', sources: 'Sources', approvedCount: 'Approved contributions',
     caseStatus: 'Case status', contribute: 'Contribute information', editorialNote: 'Editorial note', notable: 'Why is this notable?',
     principle: 'Principle', principleItems: ['Notable does not mean wrongdoing has been established.', 'Community information appears only after editorial review and verification.'],
@@ -57,7 +57,6 @@ export default async function CasePage({ params }: CasePageProps) {
     <article className="case-page">
       <header className="case-header shell">
         <Link className="back-link" href="/incidents">← {copy.back}</Link>
-        {incident.isDemo && <p className="inline-demo-note">{copy.demo}</p>}
         <div className="case-badges">
           <span className={`case-status case-status-${incident.caseStatus}`}>
             {caseStatusLabels[locale][incident.caseStatus]}

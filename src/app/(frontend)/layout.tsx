@@ -4,6 +4,7 @@ import React from 'react'
 
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
+import { getCurrentUser } from '@/lib/auth'
 import { getLocale } from '@/lib/get-locale'
 import { commonCopy } from '@/lib/i18n'
 
@@ -64,6 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
   const locale = await getLocale()
+  const user = await getCurrentUser()
 
   return (
     <html lang={locale}>
@@ -71,7 +73,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <a className="skip-link" href="#main-content">
           {commonCopy[locale].skip}
         </a>
-        <SiteHeader locale={locale} />
+        <SiteHeader locale={locale} userName={user?.publicName} />
         <main id="main-content">{children}</main>
         <SiteFooter locale={locale} />
       </body>

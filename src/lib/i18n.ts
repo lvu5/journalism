@@ -10,6 +10,7 @@ export const localeTags: Record<Locale, string> = {
 export const commonCopy = {
   vi: {
     navigation: 'Điều hướng chính',
+    home: 'Trang chủ',
     recent: 'Mới nhất',
     cases: 'Hồ sơ',
     byYear: 'Theo năm',
@@ -19,11 +20,15 @@ export const commonCopy = {
     skip: 'Bỏ qua đến nội dung',
     footerMission: 'Ghi nhận điều đã biết, chỉ rõ điều chưa biết và để bằng chứng dẫn đường.',
     authorArea: 'Khu vực tác giả',
-    demoFooter: 'Bản MVP · Nội dung minh họa được ghi rõ',
     language: 'Ngôn ngữ',
+    account: 'Tài khoản',
+    login: 'Đăng nhập',
+    register: 'Đăng ký',
+    logout: 'Đăng xuất',
   },
   en: {
     navigation: 'Main navigation',
+    home: 'Home',
     recent: 'Recent',
     cases: 'Cases',
     byYear: 'By year',
@@ -33,7 +38,10 @@ export const commonCopy = {
     skip: 'Skip to content',
     footerMission: 'Record what is known, state what is not, and let the evidence lead.',
     authorArea: 'Author area',
-    demoFooter: 'MVP · Demonstration content is clearly labelled',
     language: 'Language',
+    account: 'Account',
+    login: 'Log in',
+    register: 'Register',
+    logout: 'Log out',
   },
 } as const

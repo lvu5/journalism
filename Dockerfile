@@ -31,11 +31,22 @@ COPY . .
 # Learn more here: https://nextjs.org/telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* values are embedded by Next.js at build time. Pass these with
+# --build-arg when building a reusable Docker image.
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
 # Payload's config is evaluated during `next build` and fails fast without
 # these; placeholders are scoped to the builder stage and never ship in the
 # final image. Real values are provided to the runner at deploy time.
 ENV DATABASE_URL=postgres://localhost:5432/build-time-placeholder
-ENV PAYLOAD_SECRET=build-time-placeholder
+ENV PAYLOAD_SECRET=build-time-placeholder-that-is-never-used-at-runtime
 ENV SMTP_HOST=build-time-placeholder
 
 RUN \

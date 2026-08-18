@@ -17,28 +17,34 @@
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
-    "tui": "cross-env NODE_OPTIONS=--no-deprecation tsx src/tui/index.tsx"
+    "tui": "cross-env NODE_OPTIONS=--no-deprecation tsx src/tui/index.tsx",
+    "vercel-build": "payload migrate && next build"
   },
   "dependencies": {
     "@inkjs/ui": "2.0.0",
-    "@payloadcms/db-postgres": "3.87.1",
-    "@payloadcms/email-nodemailer": "3.87.1",
-    "@payloadcms/next": "3.87.1",
-    "@payloadcms/richtext-lexical": "3.87.1",
-    "@payloadcms/ui": "3.87.1",
+    "@marsidev/react-turnstile": "1.6.0",
+    "@payloadcms/db-postgres": "3.88.0",
+    "@payloadcms/email-nodemailer": "3.88.0",
+    "@payloadcms/next": "3.88.0",
+    "@payloadcms/richtext-lexical": "3.88.0",
+    "@payloadcms/storage-s3": "3.88.0",
+    "@payloadcms/ui": "3.88.0",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "cross-env": "^7.0.3",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "ink": "7.1.1",
     "ink-text-input": "6.0.0",
-    "next": "16.2.6",
-    "payload": "3.87.1",
+    "next": "16.3.1",
+    "payload": "3.88.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-markdown": "^10.1.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
-    "sharp": "0.34.2"
+    "server-only": "^0.0.1",
+    "sharp": "0.35.3"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
@@ -48,7 +54,7 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "4.5.2",
     "eslint": "^9.16.0",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.1",
     "ink-testing-library": "4.0.0",
     "jsdom": "28.0.0",
     "prettier": "^3.4.2",
@@ -60,6 +66,13 @@
   "engines": {
     "node": ">=20.9.0",
     "pnpm": "^9 || ^10 || ^11"
+  },
+  "pnpm": {
+    "overrides": {
+      "dompurify@<=3.4.12": "3.4.13",
+      "esbuild@0.18.20": "0.25.12",
+      "nanoid@<3.3.18": "3.3.18"
+    }
   },
   "packageManager": "pnpm@10.34.5"
 }

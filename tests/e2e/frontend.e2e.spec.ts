@@ -6,6 +6,15 @@ test.describe('Frontend', () => {
 
     await expect(page).toHaveTitle(/Hồ Sơ Mở/)
     await expect(page.getByRole('heading', { name: /Bằng chứng trước/ })).toBeVisible()
-    await expect(page.getByRole('navigation', { name: 'Điều hướng chính' })).toBeVisible()
+    const navigation = page.getByRole('navigation', { name: 'Điều hướng chính' })
+    await expect(navigation).toBeVisible()
+    await expect(navigation.getByRole('link', { name: /Trang chủ/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    await expect(navigation.getByRole('link', { name: /Mới nhất/ })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 })
