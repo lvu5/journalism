@@ -56,4 +56,45 @@ The record supports this statement. \cite{court-record}`,
     fireEvent.keyDown(editor, { key: 'Enter' })
     expect(editor.value).toBe(String.raw`Evidence \cite{court-record}`)
   })
+
+  it('disables only new draft saves once the ten-draft limit is reached', () => {
+    render(<ArticleSubmissionForm draftCount={10} locale="en" />)
+
+    const saveDraft = screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement
+    const submit = screen.getByRole('button', { name: 'Submit for review' }) as HTMLButtonElement
+
+    expect(saveDraft.disabled).toBe(true)
+    expect(saveDraft.formNoValidate).toBe(true)
+    expect(submit.disabled).toBe(false)
+  })
+
+  it('reopens an existing draft even when all ten draft slots are occupied', () => {
+    render(
+      <ArticleSubmissionForm
+        draftCount={10}
+        initialArticle={{
+          bodyMarkdown: 'A saved lead',
+          citations: [
+            {
+              accessedAt: '2026-08-18T00:00:00.000Z',
+              citationKey: 'saved-source',
+              sourceTitle: 'Saved source',
+              url: 'https://example.com/saved',
+            },
+          ],
+          eventDate: '2026-08-17T00:00:00.000Z',
+          id: 42,
+          summary: 'Saved summary',
+          title: 'Saved investigation',
+        }}
+        locale="en"
+      />,
+    )
+
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Saved investigation')
+    expect((screen.getByLabelText('Source key') as HTMLInputElement).value).toBe('saved-source')
+    expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(
+      false,
+    )
+  })
 })

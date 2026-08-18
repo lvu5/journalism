@@ -4,18 +4,49 @@ import { useActionState, useRef, useState } from 'react'
 
 import { submitArticle } from '@/app/(frontend)/author/articles/new/actions'
 import { MarkdownEditor } from '@/components/MarkdownEditor'
-import { initialArticleSubmissionState, type ArticleField } from '@/lib/article-submission-state'
+import {
+  initialArticleSubmissionState,
+  MAX_SAVED_ARTICLE_DRAFTS,
+  type ArticleField,
+  type ArticleFormValue,
+} from '@/lib/article-submission-state'
 import type { Locale } from '@/lib/i18n'
 
-type CitationRow = { id: number; key: string }
+type CitationRow = {
+  accessedAt: string
+  id: number
+  key: string
+  sourceTitle: string
+  url: string
+}
 
-export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
+const dateInputValue = (value?: string | null) => value?.slice(0, 10) || ''
+
+export function ArticleSubmissionForm({
+  draftCount = 0,
+  initialArticle,
+  locale,
+}: {
+  draftCount?: number
+  initialArticle?: ArticleFormValue
+  locale: Locale
+}) {
   const [state, formAction, isPending] = useActionState(
     submitArticle,
     initialArticleSubmissionState,
   )
-  const [citationRows, setCitationRows] = useState<CitationRow[]>([{ id: 0, key: '' }])
-  const nextCitationID = useRef(1)
+  const initialCitationRows: CitationRow[] = initialArticle?.citations?.length
+    ? initialArticle.citations.map((citation, index) => ({
+        accessedAt: dateInputValue(citation.accessedAt),
+        id: index,
+        key: citation.citationKey || '',
+        sourceTitle: citation.sourceTitle || '',
+        url: citation.url || '',
+      }))
+    : [{ accessedAt: '', id: 0, key: '', sourceTitle: '', url: '' }]
+  const [citationRows, setCitationRows] = useState<CitationRow[]>(initialCitationRows)
+  const [pendingIntent, setPendingIntent] = useState<'draft' | 'submit' | null>(null)
+  const nextCitationID = useRef(initialCitationRows.length)
   const copy =
     locale === 'vi'
       ? {
@@ -37,6 +68,10 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           addCitation: 'Thêm nguồn',
           removeCitation: 'Xóa',
           source: 'Nguồn',
+          draftCount: 'Bản nháp đã lưu',
+          draftLimit: 'Tối đa 10 bản nháp.',
+          saveDraft: 'Lưu bản nháp',
+          savingDraft: 'Đang lưu…',
           submit: 'Gửi để duyệt',
           submitting: 'Đang gửi…',
         }
@@ -59,6 +94,10 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           addCitation: 'Add source',
           removeCitation: 'Remove',
           source: 'Source',
+          draftCount: 'Saved drafts',
+          draftLimit: 'Maximum 10 drafts.',
+          saveDraft: 'Save draft',
+          savingDraft: 'Saving…',
           submit: 'Submit for review',
           submitting: 'Submitting…',
         }
@@ -73,7 +112,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
   const addCitation = () => {
     const id = nextCitationID.current
     nextCitationID.current += 1
-    setCitationRows((rows) => [...rows, { id, key: '' }])
+    setCitationRows((rows) => [...rows, { accessedAt: '', id, key: '', sourceTitle: '', url: '' }])
   }
 
   const removeCitation = (id: number) => {
@@ -87,6 +126,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
   return (
     <form action={formAction} className="contribution-form article-submission-form">
       <input name="locale" type="hidden" value={locale} />
+      {initialArticle && <input name="articleId" type="hidden" value={initialArticle.id} />}
       <div className="form-field">
         <label htmlFor="title">{copy.title}</label>
         <input
@@ -97,6 +137,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           name="title"
           required
           type="text"
+          defaultValue={initialArticle?.title || ''}
         />
         {fieldError('title')}
       </div>
@@ -108,6 +149,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           name="eventDate"
           required
           type="date"
+          defaultValue={dateInputValue(initialArticle?.eventDate)}
         />
         {fieldError('eventDate')}
       </div>
@@ -121,6 +163,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           name="summary"
           required
           rows={4}
+          defaultValue={initialArticle?.summary || ''}
         />
         {fieldError('summary')}
       </div>
@@ -130,6 +173,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           ariaInvalid={Boolean(state.fieldErrors?.bodyMarkdown)}
           citationKeys={citationRows.map((row) => row.key)}
           id="bodyMarkdown"
+          initialValue={initialArticle?.bodyMarkdown || ''}
           maxLength={100000}
           minLength={100}
           name="bodyMarkdown"
@@ -149,6 +193,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           maxLength={500}
           name="authors"
           type="text"
+          defaultValue={initialArticle?.authors || ''}
         />
         <small>{copy.authorsHelp}</small>
         {fieldError('authors')}
@@ -194,6 +239,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
                     name="citationAccessedAt"
                     required
                     type="date"
+                    defaultValue={row.accessedAt}
                   />
                 </div>
                 <div className="form-field citation-title-field">
@@ -205,6 +251,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
                     name="citationTitle"
                     required
                     type="text"
+                    defaultValue={row.sourceTitle}
                   />
                 </div>
                 <div className="form-field citation-url-field">
@@ -215,6 +262,7 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
                     placeholder="https://"
                     required
                     type="url"
+                    defaultValue={row.url}
                   />
                 </div>
               </div>
@@ -231,10 +279,38 @@ export function ArticleSubmissionForm({ locale }: { locale: Locale }) {
           {state.message}
         </p>
       )}
-      <button className="primary-button" disabled={isPending} type="submit">
-        <span>{isPending ? copy.submitting : copy.submit}</span>
-        <span aria-hidden="true">→</span>
-      </button>
+      <div className="article-form-footer">
+        <p>
+          <strong>
+            {copy.draftCount}: {draftCount}/{MAX_SAVED_ARTICLE_DRAFTS}
+          </strong>
+          <span>{copy.draftLimit}</span>
+        </p>
+        <div className="article-form-actions">
+          <button
+            className="draft-button"
+            disabled={isPending || (!initialArticle && draftCount >= MAX_SAVED_ARTICLE_DRAFTS)}
+            formNoValidate
+            name="intent"
+            onClick={() => setPendingIntent('draft')}
+            type="submit"
+            value="draft"
+          >
+            {isPending && pendingIntent === 'draft' ? copy.savingDraft : copy.saveDraft}
+          </button>
+          <button
+            className="primary-button"
+            disabled={isPending}
+            name="intent"
+            onClick={() => setPendingIntent('submit')}
+            type="submit"
+            value="submit"
+          >
+            <span>{isPending && pendingIntent === 'submit' ? copy.submitting : copy.submit}</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
     </form>
   )
 }

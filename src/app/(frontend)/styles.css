@@ -2225,6 +2225,58 @@ select {
   text-transform: uppercase;
 }
 
+.article-form-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  padding-top: 22px;
+  border-top: 1px solid var(--ink);
+}
+
+.article-form-footer > p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.article-form-footer > p strong {
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.article-form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.draft-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.draft-button:hover:not(:disabled) {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.draft-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .author-page {
   padding-block: 42px 90px;
 }
@@ -2262,9 +2314,25 @@ select {
 }
 
 .author-submissions h2 {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 11px;
   letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.author-submissions-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.author-submissions-heading > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -2293,6 +2361,24 @@ select {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 18px;
   font-weight: 400;
+}
+
+.article-draft-link {
+  display: grid;
+  gap: 5px;
+  width: fit-content;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.article-draft-link:hover {
+  color: var(--red);
+}
+
+.article-draft-link small {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .author-submissions li small,
@@ -3049,6 +3135,21 @@ select {
   .author-header {
     align-items: start;
     flex-direction: column;
+  }
+
+  .article-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .article-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .article-form-actions .primary-button,
+  .article-form-actions .draft-button {
+    width: 100%;
   }
 
   .auth-page {

@@ -19,6 +19,7 @@ type MarkdownEditorProps = {
   ariaInvalid?: boolean
   citationKeys: string[]
   id: string
+  initialValue?: string
   locale: Locale
   maxLength: number
   minLength: number
@@ -29,13 +30,14 @@ export function MarkdownEditor({
   ariaInvalid,
   citationKeys,
   id,
+  initialValue = '',
   locale,
   maxLength,
   minLength,
   name,
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<'write' | 'preview'>('write')
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue)
   const [citationAutocomplete, setCitationAutocomplete] = useState<CitationAutocomplete | null>(
     null,
   )

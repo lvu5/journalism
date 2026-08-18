@@ -107,6 +107,8 @@ Draft → Submitted → In review → Changes requested → Submitted
 
 Payload's `_status` remains `draft` throughout editorial review. It changes to `published` only when an administrator publishes, preventing workflow approval from accidentally making a story public.
 
+Authors can keep up to 10 private article drafts. A draft may be incomplete, can be reopened from `/author`, and enters editorial review only when the author chooses **Submit for review**.
+
 ## Case and community workflow
 
 Case lifecycle labels are public and intentionally separate from evidence verification:
