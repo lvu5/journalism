@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  initialAuthState,
-  registerAction,
-} from '@/app/(frontend)/auth/actions'
+import { registerAction } from '@/app/(frontend)/auth/actions'
+import { initialAuthState } from '@/lib/auth-form-state'
 import { safeNextPath } from '@/lib/auth'
 
 describe('Frontend authentication', () => {

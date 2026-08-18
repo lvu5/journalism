@@ -3,13 +3,9 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 
-import {
-  initialAuthState,
-  requestPasswordResetAction,
-  updatePasswordAction,
-  type AuthFormState,
-} from '@/app/(frontend)/auth/actions'
+import { requestPasswordResetAction, updatePasswordAction } from '@/app/(frontend)/auth/actions'
 import { CaptchaField } from '@/components/CaptchaField'
+import { initialAuthState, type AuthFormState } from '@/lib/auth-form-state'
 import type { Locale } from '@/lib/i18n'
 
 export function PasswordForm({ locale, mode }: { locale: Locale; mode: 'request' | 'update' }) {
