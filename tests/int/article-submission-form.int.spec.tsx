@@ -40,4 +40,20 @@ The record supports this statement. \cite{court-record}`,
       '#citation-court-record',
     )
   })
+
+  it('autocompletes a citation key at the cursor', () => {
+    render(<ArticleSubmissionForm locale="en" />)
+    const editor = screen.getByLabelText('Article (Markdown)') as HTMLTextAreaElement
+
+    fireEvent.change(screen.getByLabelText('Source key'), {
+      target: { value: 'court-record' },
+    })
+    fireEvent.change(editor, { target: { value: String.raw`Evidence \cite{co}` } })
+    editor.setSelectionRange(editor.value.length - 1, editor.value.length - 1)
+    fireEvent.select(editor)
+
+    expect(screen.getByRole('option', { name: 'court-record' })).toBeTruthy()
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    expect(editor.value).toBe(String.raw`Evidence \cite{court-record}`)
+  })
 })

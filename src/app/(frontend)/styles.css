@@ -2147,10 +2147,10 @@ select {
   gap: 2px;
 }
 
-.markdown-editor textarea {
+.form-field .markdown-editor textarea {
   display: block;
   min-height: 430px;
-  padding: 20px;
+  padding: 20px 26px;
   border: 0;
   background: transparent;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -2166,6 +2166,39 @@ select {
 
 .markdown-editor textarea.markdown-editor-hidden {
   display: none;
+}
+
+.citation-autocomplete {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 46px;
+  padding: 8px 14px;
+  overflow-x: auto;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.citation-autocomplete button {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--rule);
+  background: var(--paper-bright);
+  color: var(--ink);
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+.citation-autocomplete button:hover,
+.citation-autocomplete button[aria-selected='true'] {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.citation-autocomplete > span {
+  color: var(--muted);
+  font-size: 10px;
 }
 
 .markdown-editor-preview {

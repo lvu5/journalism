@@ -1,12 +1,19 @@
 'use client'
 
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 
-import { renderCitationReferences } from '@/lib/citations'
+import { isCitationKey, normalizeCitationKey, renderCitationReferences } from '@/lib/citations'
 import type { Locale } from '@/lib/i18n'
+
+type CitationAutocomplete = {
+  activeIndex: number
+  end: number
+  query: string
+  start: number
+}
 
 type MarkdownEditorProps = {
   ariaInvalid?: boolean
@@ -29,6 +36,9 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<'write' | 'preview'>('write')
   const [value, setValue] = useState('')
+  const [citationAutocomplete, setCitationAutocomplete] = useState<CitationAutocomplete | null>(
+    null,
+  )
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const copy =
     locale === 'vi'
@@ -42,6 +52,9 @@ export function MarkdownEditor({
           list: 'Danh sách',
           link: 'Liên kết',
           citation: 'Trích dẫn',
+          citationSuggestions: 'Mã nguồn phù hợp',
+          noCitationKeys: 'Hãy thêm mã nguồn ở phần nguồn trích dẫn bên dưới.',
+          noCitationMatch: 'Không có mã nguồn phù hợp.',
           empty: 'Nội dung xem trước sẽ xuất hiện ở đây.',
           words: 'từ',
           characters: 'ký tự',
@@ -56,6 +69,9 @@ export function MarkdownEditor({
           list: 'List',
           link: 'Link',
           citation: 'Citation',
+          citationSuggestions: 'Matching source keys',
+          noCitationKeys: 'Add a source key in the citation section below.',
+          noCitationMatch: 'No matching source key.',
           empty: 'The rendered preview will appear here.',
           words: 'words',
           characters: 'characters',
@@ -70,6 +86,86 @@ export function MarkdownEditor({
     [citationKeys, value],
   )
   const wordCount = value.trim() ? value.trim().split(/\s+/u).length : 0
+  const availableCitationKeys = useMemo(
+    () =>
+      [...new Set(citationKeys.map(normalizeCitationKey))].filter(
+        (citationKey) => citationKey && isCitationKey(citationKey),
+      ),
+    [citationKeys],
+  )
+  const citationSuggestions = useMemo(() => {
+    if (!citationAutocomplete) return []
+    const query = normalizeCitationKey(citationAutocomplete.query)
+    return availableCitationKeys.filter((citationKey) => citationKey.startsWith(query))
+  }, [availableCitationKeys, citationAutocomplete])
+
+  const updateCitationAutocomplete = (markdown: string, cursor: number) => {
+    const activeCitation = markdown.slice(0, cursor).match(/\\cite\{[^{}\n]*$/)
+    if (!activeCitation) {
+      setCitationAutocomplete(null)
+      return
+    }
+
+    const citationContents = activeCitation[0].slice('\\cite{'.length)
+    const currentPart = citationContents.split(',').at(-1) || ''
+    const query = currentPart.trimStart()
+    if (!/^[A-Za-z0-9:_-]*$/.test(query)) {
+      setCitationAutocomplete(null)
+      return
+    }
+
+    const trailingKey = markdown.slice(cursor).match(/^[A-Za-z0-9:_-]*/)?.[0] || ''
+    setCitationAutocomplete({
+      activeIndex: 0,
+      end: cursor + trailingKey.length,
+      query,
+      start: cursor - query.length,
+    })
+  }
+
+  const chooseCitationKey = (citationKey: string) => {
+    const textarea = textareaRef.current
+    if (!textarea || !citationAutocomplete) return
+    const hasClosingBrace = value[citationAutocomplete.end] === '}'
+    const nextValue = `${value.slice(0, citationAutocomplete.start)}${citationKey}${value.slice(citationAutocomplete.end)}`
+    const cursor = citationAutocomplete.start + citationKey.length + (hasClosingBrace ? 1 : 0)
+    setValue(nextValue)
+    setCitationAutocomplete(null)
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(cursor, cursor)
+    })
+  }
+
+  const insertCitation = () => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = value.slice(start, end)
+    const citationKey = selectedText || 'source-key'
+    const replacement = `\\cite{${citationKey}}`
+    const keyStart = start + '\\cite{'.length
+    const keyEnd = keyStart + citationKey.length
+    setValue(`${value.slice(0, start)}${replacement}${value.slice(end)}`)
+    setCitationAutocomplete({
+      activeIndex: 0,
+      end: keyEnd,
+      query: selectedText,
+      start: keyStart,
+    })
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(keyStart, keyEnd)
+    })
+  }
+
+  const handleCitationOptionClick = (event: MouseEvent<HTMLButtonElement>) => {
+    const citationKey = event.currentTarget.dataset.citationKey
+    if (citationKey) chooseCitationKey(citationKey)
+  }
 
   const replaceSelection = (
     before: string,
@@ -114,7 +210,35 @@ export function MarkdownEditor({
   }
 
   const handleKeyboard = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+    if (citationAutocomplete && event.key === 'Escape') {
+      event.preventDefault()
+      setCitationAutocomplete(null)
+    } else if (citationAutocomplete && citationSuggestions.length && event.key === 'ArrowDown') {
+      event.preventDefault()
+      setCitationAutocomplete((current) =>
+        current
+          ? { ...current, activeIndex: (current.activeIndex + 1) % citationSuggestions.length }
+          : null,
+      )
+    } else if (citationAutocomplete && citationSuggestions.length && event.key === 'ArrowUp') {
+      event.preventDefault()
+      setCitationAutocomplete((current) =>
+        current
+          ? {
+              ...current,
+              activeIndex:
+                (current.activeIndex - 1 + citationSuggestions.length) % citationSuggestions.length,
+            }
+          : null,
+      )
+    } else if (
+      citationAutocomplete &&
+      citationSuggestions.length &&
+      (event.key === 'Enter' || event.key === 'Tab')
+    ) {
+      event.preventDefault()
+      chooseCitationKey(citationSuggestions[citationAutocomplete.activeIndex])
+    } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
       event.preventDefault()
       replaceSelection('**', '**', locale === 'vi' ? 'văn bản đậm' : 'bold text')
     } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'i') {
@@ -195,30 +319,67 @@ export function MarkdownEditor({
           >
             ↗
           </button>
-          <button
-            onClick={() => replaceSelection('\\cite{', '}', 'source-key')}
-            title={copy.citation}
-            type="button"
-          >
+          <button onClick={insertCitation} title={copy.citation} type="button">
             [#]
           </button>
         </div>
       </div>
 
       <textarea
+        aria-activedescendant={
+          citationAutocomplete && citationSuggestions.length
+            ? `${id}-citation-option-${citationAutocomplete.activeIndex}`
+            : undefined
+        }
+        aria-autocomplete="list"
+        aria-controls={`${id}-citation-suggestions`}
         aria-invalid={ariaInvalid}
         className={mode === 'write' ? '' : 'markdown-editor-hidden'}
         id={id}
         maxLength={maxLength}
         minLength={mode === 'write' ? minLength : undefined}
         name={name}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value)
+          updateCitationAutocomplete(event.target.value, event.target.selectionStart)
+        }}
         onKeyDown={handleKeyboard}
+        onSelect={(event) =>
+          updateCitationAutocomplete(event.currentTarget.value, event.currentTarget.selectionStart)
+        }
         ref={textareaRef}
         required={mode === 'write'}
         rows={22}
         value={value}
       />
+
+      {mode === 'write' && citationAutocomplete && (
+        <div
+          aria-label={copy.citationSuggestions}
+          className="citation-autocomplete"
+          id={`${id}-citation-suggestions`}
+          role="listbox"
+        >
+          {citationSuggestions.length ? (
+            citationSuggestions.map((citationKey, index) => (
+              <button
+                aria-selected={citationAutocomplete.activeIndex === index}
+                data-citation-key={citationKey}
+                id={`${id}-citation-option-${index}`}
+                key={citationKey}
+                onClick={handleCitationOptionClick}
+                onMouseDown={(event) => event.preventDefault()}
+                role="option"
+                type="button"
+              >
+                {citationKey}
+              </button>
+            ))
+          ) : (
+            <span>{availableCitationKeys.length ? copy.noCitationMatch : copy.noCitationKeys}</span>
+          )}
+        </div>
+      )}
 
       {mode === 'preview' && (
         <div className="markdown-editor-preview markdown-body" role="tabpanel">
