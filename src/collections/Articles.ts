@@ -2,21 +2,55 @@ import {
   slugField,
   ValidationError,
   type CollectionBeforeChangeHook,
+  type CollectionBeforeValidateHook,
   type CollectionConfig,
   type Where,
 } from 'payload'
 
 import { authenticated, getUser, hasRole, isAdmin, isReviewer } from '../access/roles'
 import { validateHttpUrl } from '../fields/validate-http-url'
+import { isCitationKey, normalizeCitationKey } from '../lib/citations'
 
 const publicArticle: Where = {
-  and: [
-    { _status: { equals: 'published' } },
-    { workflowStatus: { equals: 'published' } },
-  ],
+  and: [{ _status: { equals: 'published' } }, { workflowStatus: { equals: 'published' } }],
 }
 
-const protectWorkflow: CollectionBeforeChangeHook = ({ collection, data, operation, originalDoc, req }) => {
+const prepareCitationKeys: CollectionBeforeValidateHook = ({ collection, data }) => {
+  if (!data?.citations || !Array.isArray(data.citations)) return data
+
+  const seen = new Set<string>()
+  const errors: { message: string; path: string }[] = []
+  data.citations = data.citations.map((citation, index) => {
+    const suppliedKey = typeof citation?.citationKey === 'string' ? citation.citationKey : ''
+    const citationKey = normalizeCitationKey(suppliedKey || `source-${index + 1}`)
+
+    if (!isCitationKey(citationKey)) {
+      errors.push({
+        message: 'Start with a letter and use only letters, numbers, colon, underscore, or hyphen.',
+        path: `citations.${index}.citationKey`,
+      })
+    } else if (seen.has(citationKey)) {
+      errors.push({
+        message: 'Citation keys must be unique within an article.',
+        path: `citations.${index}.citationKey`,
+      })
+    }
+    seen.add(citationKey)
+
+    return { ...citation, citationKey }
+  })
+
+  if (errors.length) throw new ValidationError({ collection: collection?.slug, errors })
+  return data
+}
+
+const protectWorkflow: CollectionBeforeChangeHook = ({
+  collection,
+  data,
+  operation,
+  originalDoc,
+  req,
+}) => {
   const user = getUser(req.user)
 
   // Unauthenticated local-API writes (e.g. seed scripts) may publish only when
@@ -114,10 +148,7 @@ export const Articles: CollectionConfig = {
         and: [
           { _status: { equals: 'draft' } },
           {
-            or: [
-              { submittedBy: { equals: user.id } },
-              { authors: { contains: user.id } },
-            ],
+            or: [{ submittedBy: { equals: user.id } }, { authors: { contains: user.id } }],
           },
         ],
       }
@@ -131,6 +162,7 @@ export const Articles: CollectionConfig = {
     },
   },
   hooks: {
+    beforeValidate: [prepareCitationKeys],
     beforeChange: [protectWorkflow],
   },
   fields: [
@@ -163,7 +195,8 @@ export const Articles: CollectionConfig = {
               label: 'Description (Markdown)',
               required: true,
               admin: {
-                description: 'Markdown is rendered as formatted text; raw HTML is not published.',
+                description:
+                  'Markdown is rendered as formatted text; raw HTML is not published. Cite sources inline with \\cite{source-key}.',
                 rows: 28,
               },
             },
@@ -180,11 +213,10 @@ export const Articles: CollectionConfig = {
               type: 'array',
               label: 'Public byline (optional)',
               admin: {
-                description: 'Use for guest or pseudonymous contributors who do not have an account.',
+                description:
+                  'Use for guest or pseudonymous contributors who do not have an account.',
               },
-              fields: [
-                { name: 'name', type: 'text', required: true, maxLength: 100 },
-              ],
+              fields: [{ name: 'name', type: 'text', required: true, maxLength: 100 }],
             },
           ],
         },
@@ -198,6 +230,20 @@ export const Articles: CollectionConfig = {
               minRows: 1,
               labels: { singular: 'Citation', plural: 'Citations' },
               fields: [
+                {
+                  name: 'citationKey',
+                  type: 'text',
+                  required: true,
+                  maxLength: 64,
+                  admin: {
+                    description:
+                      'Unique key used in the article body, for example: court-record in \\cite{court-record}.',
+                  },
+                  validate: (value: string | null | undefined) =>
+                    typeof value === 'string' && isCitationKey(value)
+                      ? true
+                      : 'Use a letter first, followed by letters, numbers, colon, underscore, or hyphen.',
+                },
                 { name: 'sourceTitle', type: 'text', required: true, maxLength: 240 },
                 { name: 'publisher', type: 'text', maxLength: 140 },
                 { name: 'url', type: 'text', required: true, validate: validateHttpUrl },
@@ -207,7 +253,12 @@ export const Articles: CollectionConfig = {
                   required: true,
                   admin: { date: { pickerAppearance: 'dayOnly' } },
                 },
-                { name: 'archiveUrl', type: 'text', label: 'Archived URL', validate: validateHttpUrl },
+                {
+                  name: 'archiveUrl',
+                  type: 'text',
+                  label: 'Archived URL',
+                  validate: validateHttpUrl,
+                },
                 {
                   name: 'note',
                   type: 'textarea',

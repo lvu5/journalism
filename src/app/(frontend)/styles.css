@@ -30,9 +30,7 @@ html {
 
 body {
   margin: 0;
-  background:
-    linear-gradient(rgba(21, 21, 19, 0.018) 1px, transparent 1px),
-    var(--paper);
+  background: linear-gradient(rgba(21, 21, 19, 0.018) 1px, transparent 1px), var(--paper);
   background-size: 100% 8px;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
@@ -1556,6 +1554,21 @@ select {
   text-decoration-thickness: 2px;
 }
 
+.markdown-body a[href^='#citation-'] {
+  display: inline-block;
+  margin-inline: 0.08em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.68em;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: super;
+}
+
+.citations li[id] {
+  scroll-margin-top: 24px;
+}
+
 .markdown-body blockquote {
   margin: 2em 0;
   padding: 24px 0 24px 28px;
@@ -2013,6 +2026,75 @@ select {
 
 .form-fieldset .form-field:nth-of-type(2) {
   grid-column: 1 / -1;
+}
+
+.citation-fieldset {
+  display: block;
+}
+
+.citation-form-help {
+  max-width: 640px;
+  margin: 4px 0 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.citation-form-rows {
+  display: grid;
+  gap: 14px;
+}
+
+.citation-form-row {
+  padding: 18px;
+  border: 1px solid var(--rule);
+}
+
+.citation-form-row-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.citation-form-row-heading strong {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.citation-form-row-heading button,
+.citation-add-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--red);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.citation-form-row-heading button:hover,
+.citation-add-button:hover {
+  text-decoration: underline;
+}
+
+.citation-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.45fr);
+  gap: 18px;
+}
+
+.citation-title-field,
+.citation-url-field {
+  grid-column: 1 / -1;
+}
+
+.citation-add-button {
+  margin-top: 16px;
 }
 
 .author-page {
@@ -2814,6 +2896,15 @@ select {
   }
 
   .form-fieldset .form-field:nth-of-type(2) {
+    grid-column: auto;
+  }
+
+  .citation-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .citation-title-field,
+  .citation-url-field {
     grid-column: auto;
   }
 

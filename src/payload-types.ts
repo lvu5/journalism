@@ -183,7 +183,7 @@ export interface Article {
    */
   summary: string;
   /**
-   * Markdown is rendered as formatted text; raw HTML is not published.
+   * Markdown is rendered as formatted text; raw HTML is not published. Cite sources inline with \cite{source-key}.
    */
   bodyMarkdown: string;
   authors?: (number | User)[] | null;
@@ -197,6 +197,10 @@ export interface Article {
       }[]
     | null;
   citations: {
+    /**
+     * Unique key used in the article body, for example: court-record in \cite{court-record}.
+     */
+    citationKey: string;
     sourceTitle: string;
     publisher?: string | null;
     url: string;
@@ -503,6 +507,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   citations?:
     | T
     | {
+        citationKey?: T;
         sourceTitle?: T;
         publisher?: T;
         url?: T;

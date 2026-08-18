@@ -1,6 +1,7 @@
 import { localeTags, type Locale } from './i18n'
 
 export type CitationView = {
+  citationKey?: string | null
   sourceTitle: string
   publisher?: string | null
   url: string
@@ -119,10 +120,7 @@ export const caseStatusLabels: Record<Locale, Record<IncidentView['caseStatus'],
   },
 }
 
-export const caseStatusDescriptions: Record<
-  Locale,
-  Record<IncidentView['caseStatus'], string>
-> = {
+export const caseStatusDescriptions: Record<Locale, Record<IncidentView['caseStatus'], string>> = {
   vi: {
     'newly-opened': 'Vụ việc vừa được đưa vào hệ thống và đang xác định phạm vi.',
     investigating: 'Nhóm điều tra đang thu thập tài liệu và kiểm chứng thông tin.',
@@ -133,7 +131,8 @@ export const caseStatusDescriptions: Record<
   en: {
     'newly-opened': 'The case has just been opened and its scope is being defined.',
     investigating: 'The reporting team is gathering records and verifying information.',
-    'accepting-contributions': 'The case is accepting documents, data, and accounts from the public.',
+    'accepting-contributions':
+      'The case is accepting documents, data, and accounts from the public.',
     'reviewing-contributions': 'Received contributions are being screened and verified.',
     closed: 'The case is no longer accepting information but remains available as a public record.',
   },

@@ -5,6 +5,7 @@ import * as migration_20260810_124622_article_corrections from './20260810_12462
 import * as migration_20260810_135605_audit_logs_and_field_crypto from './20260810_135605_audit_logs_and_field_crypto'
 import * as migration_20260815_150657_add_supabase_author_identity from './20260815_150657_add_supabase_author_identity'
 import * as migration_20260816_084007_add_cloud_media_prefix from './20260816_084007_add_cloud_media_prefix'
+import * as migration_20260818_125055_keyed_article_citations from './20260818_125055_keyed_article_citations'
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20260816_084007_add_cloud_media_prefix.up,
     down: migration_20260816_084007_add_cloud_media_prefix.down,
     name: '20260816_084007_add_cloud_media_prefix',
+  },
+  {
+    up: migration_20260818_125055_keyed_article_citations.up,
+    down: migration_20260818_125055_keyed_article_citations.down,
+    name: '20260818_125055_keyed_article_citations',
   },
 ]

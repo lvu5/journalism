@@ -110,6 +110,7 @@ describe('Collection access control', () => {
         bodyMarkdown: 'Body long enough for the required field.',
         citations: [
           {
+            citationKey: 'review-test',
             sourceTitle: 'Test source',
             url: 'https://example.com/review-test',
             accessedAt: new Date().toISOString(),
@@ -132,7 +133,8 @@ describe('Collection access control', () => {
     if (reviewId) {
       await payload.delete({ collection: 'reviews', id: reviewId, overrideAccess: true })
     }
-    if (articleId) await payload.delete({ collection: 'articles', id: articleId, overrideAccess: true })
+    if (articleId)
+      await payload.delete({ collection: 'articles', id: articleId, overrideAccess: true })
     if (privateMediaId)
       await payload.delete({ collection: 'media', id: privateMediaId, overrideAccess: true })
     if (publicMediaId)
@@ -146,9 +148,9 @@ describe('Collection access control', () => {
 
   it('anonymous users cannot list staff accounts', async () => {
     // users.read returns false for anonymous requests — a hard Forbidden.
-    await expect(
-      payload.find({ collection: 'users', overrideAccess: false }),
-    ).rejects.toThrow(/not allowed/i)
+    await expect(payload.find({ collection: 'users', overrideAccess: false })).rejects.toThrow(
+      /not allowed/i,
+    )
   })
 
   it('anonymous readers only see published cases', async () => {
@@ -185,6 +187,7 @@ describe('Collection access control', () => {
         bodyMarkdown: 'Body long enough for the required field.',
         citations: [
           {
+            citationKey: 'self-review-test',
             sourceTitle: 'Test source',
             url: 'https://example.com/self-review-test',
             accessedAt: new Date().toISOString(),
@@ -211,7 +214,8 @@ describe('Collection access control', () => {
     await payload.delete({ collection: 'articles', id: ownArticle.id, overrideAccess: true })
   })
 
-  it('a second reviewer can approve, syncing the article workflow status', async () => {    const review = await payload.create({
+  it('a second reviewer can approve, syncing the article workflow status', async () => {
+    const review = await payload.create({
       collection: 'reviews',
       user: reviewer2,
       overrideAccess: false,

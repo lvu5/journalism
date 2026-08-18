@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 
+import { citationAnchor, renderCitationReferences } from '@/lib/citations'
 import { formatDate, topicLabels } from '@/lib/content'
 import { getLocale } from '@/lib/get-locale'
 import { getArticleBySlug } from '@/lib/queries'
@@ -29,17 +30,48 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const locale = await getLocale()
-  const copy = locale === 'vi' ? {
-    back: 'Trở lại bài mới', author: 'Tác giả',
-    editorial: 'Ban biên tập', eventDate: 'Ngày sự kiện', published: 'Xuất bản', sources: 'Nguồn',
-    commitment: 'Cam kết biên tập', commitments: ['Nguyên văn tài liệu được ưu tiên.', 'Khoảng trống dữ liệu được ghi rõ.', 'Thay đổi sau xuất bản được lưu vết.'],
-    citations: 'Nguồn & tài liệu', items: 'mục', accessed: 'Truy cập', original: 'Nguồn gốc', archive: 'Bản lưu', corrections: 'Đính chính',
-  } : {
-    back: 'Back to recent', author: 'Author',
-    editorial: 'Editorial team', eventDate: 'Event date', published: 'Published', sources: 'Sources',
-    commitment: 'Editorial commitment', commitments: ['Primary documents are preferred.', 'Data gaps are clearly stated.', 'Post-publication changes are recorded.'],
-    citations: 'Sources & documents', items: 'items', accessed: 'Accessed', original: 'Original source', archive: 'Archive', corrections: 'Corrections',
-  }
+  const copy =
+    locale === 'vi'
+      ? {
+          back: 'Trở lại bài mới',
+          author: 'Tác giả',
+          editorial: 'Ban biên tập',
+          eventDate: 'Ngày sự kiện',
+          published: 'Xuất bản',
+          sources: 'Nguồn',
+          commitment: 'Cam kết biên tập',
+          commitments: [
+            'Nguyên văn tài liệu được ưu tiên.',
+            'Khoảng trống dữ liệu được ghi rõ.',
+            'Thay đổi sau xuất bản được lưu vết.',
+          ],
+          citations: 'Nguồn & tài liệu',
+          items: 'mục',
+          accessed: 'Truy cập',
+          original: 'Nguồn gốc',
+          archive: 'Bản lưu',
+          corrections: 'Đính chính',
+        }
+      : {
+          back: 'Back to recent',
+          author: 'Author',
+          editorial: 'Editorial team',
+          eventDate: 'Event date',
+          published: 'Published',
+          sources: 'Sources',
+          commitment: 'Editorial commitment',
+          commitments: [
+            'Primary documents are preferred.',
+            'Data gaps are clearly stated.',
+            'Post-publication changes are recorded.',
+          ],
+          citations: 'Sources & documents',
+          items: 'items',
+          accessed: 'Accessed',
+          original: 'Original source',
+          archive: 'Archive',
+          corrections: 'Corrections',
+        }
   const { slug } = await params
   const article = await getArticleBySlug(slug)
   if (!article) notFound()
@@ -47,9 +79,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <article className="story-page">
       <header className="story-header shell">
-        <Link className="back-link" href="/recent">← {copy.back}</Link>
+        <Link className="back-link" href="/recent">
+          ← {copy.back}
+        </Link>
         <div className="story-taxonomy">
-          {article.topics.map((topic) => <span key={topic}>{topicLabels[locale][topic] || topic}</span>)}
+          {article.topics.map((topic) => (
+            <span key={topic}>{topicLabels[locale][topic] || topic}</span>
+          ))}
         </div>
         <h1>{article.title}</h1>
         <p className="story-summary">{article.summary}</p>
@@ -76,11 +112,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <div className="story-layout shell">
         <aside className="story-rail">
           <p>{copy.commitment}</p>
-          {copy.commitments.map((commitment) => <span key={commitment}>{commitment}</span>)}
+          {copy.commitments.map((commitment) => (
+            <span key={commitment}>{commitment}</span>
+          ))}
         </aside>
         <div className="markdown-body">
           <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-            {article.bodyMarkdown}
+            {renderCitationReferences(article.bodyMarkdown, article.citations)}
           </ReactMarkdown>
         </div>
       </div>
@@ -104,25 +142,37 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <section className="citations shell" aria-labelledby="citations-heading">
         <div className="section-heading section-heading-large">
           <h2 id="citations-heading">{copy.citations}</h2>
-          <span>{article.citations.length} {copy.items}</span>
+          <span>
+            {article.citations.length} {copy.items}
+          </span>
         </div>
         <ol>
           {article.citations.map((citation, index) => (
-            <li key={`${citation.url}-${index}`}>
+            <li
+              id={citationAnchor(citation.citationKey || `source-${index + 1}`)}
+              key={`${citation.url}-${index}`}
+            >
               <span>{String(index + 1).padStart(2, '0')}</span>
               <div>
                 <h3>{citation.sourceTitle}</h3>
                 <p>
-                  {[citation.publisher, `${copy.accessed} ${formatDate(citation.accessedAt, true, locale)}`]
+                  {[
+                    citation.publisher,
+                    `${copy.accessed} ${formatDate(citation.accessedAt, true, locale)}`,
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </p>
                 {citation.note && <p className="citation-note">{citation.note}</p>}
               </div>
               <div className="citation-links">
-                <a href={citation.url} rel="noreferrer noopener" target="_blank">{copy.original} ↗</a>
+                <a href={citation.url} rel="noreferrer noopener" target="_blank">
+                  {copy.original} ↗
+                </a>
                 {citation.archiveUrl && (
-                  <a href={citation.archiveUrl} rel="noreferrer noopener" target="_blank">{copy.archive} ↗</a>
+                  <a href={citation.archiveUrl} rel="noreferrer noopener" target="_blank">
+                    {copy.archive} ↗
+                  </a>
                 )}
               </div>
             </li>

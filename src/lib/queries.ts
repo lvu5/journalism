@@ -39,6 +39,7 @@ const mapArticle = (article: Article): ArticleView => ({
     ...(article.authors?.map(relationName).filter((name): name is string => Boolean(name)) || []),
   ],
   citations: (article.citations || []).map((citation) => ({
+    citationKey: citation.citationKey,
     sourceTitle: citation.sourceTitle,
     publisher: citation.publisher,
     url: citation.url,
@@ -185,9 +186,7 @@ export const getArticleBySlug = cache(async (slug: string): Promise<ArticleView 
     console.error('[queries] getArticleBySlug failed', error)
     if (!demoContentEnabled()) throw error
   }
-  return demoContentEnabled()
-    ? demoArticles.find((article) => article.slug === slug) || null
-    : null
+  return demoContentEnabled() ? demoArticles.find((article) => article.slug === slug) || null : null
 })
 
 // Explicit featured lookup: a featured story older than the latest N must
@@ -343,45 +342,43 @@ export const getFeaturedIncident = cache(async (): Promise<IncidentView | null> 
   }
 })
 
-export const getIncidentBySlug = cache(
-  async (slug: string): Promise<IncidentDetailView | null> => {
-    try {
-      const payload = await getPayload({ config })
-      const incidentResult = await payload.find({
-        collection: 'incidents',
+export const getIncidentBySlug = cache(async (slug: string): Promise<IncidentDetailView | null> => {
+  try {
+    const payload = await getPayload({ config })
+    const incidentResult = await payload.find({
+      collection: 'incidents',
+      depth: 0,
+      limit: 1,
+      overrideAccess: false,
+      where: { slug: { equals: slug } },
+    })
+    const incident = incidentResult.docs[0]
+    if (incident) {
+      const contributionResult = await payload.find({
+        collection: 'community-contributions',
         depth: 0,
-        limit: 1,
+        limit: 100,
         overrideAccess: false,
-        where: { slug: { equals: slug } },
+        sort: 'approvedAt',
+        where: { incident: { equals: incident.id } },
       })
-      const incident = incidentResult.docs[0]
-      if (incident) {
-        const contributionResult = await payload.find({
-          collection: 'community-contributions',
-          depth: 0,
-          limit: 100,
-          overrideAccess: false,
-          sort: 'approvedAt',
-          where: { incident: { equals: incident.id } },
-        })
 
-        return {
-          ...mapIncident(incident),
-          approvedContributions: contributionResult.docs.map(mapContribution),
-        }
+      return {
+        ...mapIncident(incident),
+        approvedContributions: contributionResult.docs.map(mapContribution),
       }
-      if (!demoContentEnabled()) return null
-    } catch (error) {
-      console.error('[queries] getIncidentBySlug failed', error)
-      if (!demoContentEnabled()) throw error
     }
-
     if (!demoContentEnabled()) return null
-    const incident = demoIncidents.find((item) => item.slug === slug)
-    if (!incident) return null
-    return {
-      ...incident,
-      approvedContributions: demoContributions[slug] || [],
-    }
-  },
-)
+  } catch (error) {
+    console.error('[queries] getIncidentBySlug failed', error)
+    if (!demoContentEnabled()) throw error
+  }
+
+  if (!demoContentEnabled()) return null
+  const incident = demoIncidents.find((item) => item.slug === slug)
+  if (!incident) return null
+  return {
+    ...incident,
+    approvedContributions: demoContributions[slug] || [],
+  }
+})
