@@ -28,6 +28,7 @@ const articleData = {
   bodyMarkdown: 'This body exists to satisfy the required Markdown field.',
   citations: [
     {
+      citationKey: 'workflow-test',
       sourceTitle: 'Test source',
       url: 'https://example.com/workflow-test',
       accessedAt: new Date().toISOString(),
@@ -44,9 +45,9 @@ describe('Editorial workflow', () => {
 
   beforeAll(async () => {
     payload = await getPayload({ config: await config })
-    author = await createUser('author', 'author') as User
-    reviewer = await createUser('reviewer', 'reviewer') as User
-    admin = await createUser('admin', 'admin') as User
+    author = (await createUser('author', 'author')) as User
+    reviewer = (await createUser('reviewer', 'reviewer')) as User
+    admin = (await createUser('admin', 'admin')) as User
   }, 60_000)
 
   afterAll(async () => {
@@ -65,7 +66,9 @@ describe('Editorial workflow', () => {
     articleId = article.id
     expect(article.workflowStatus).toBe('draft')
     expect(article._status).toBe('draft')
-    expect(typeof article.submittedBy === 'object' ? article.submittedBy?.id : article.submittedBy).toBe(author.id)
+    expect(
+      typeof article.submittedBy === 'object' ? article.submittedBy?.id : article.submittedBy,
+    ).toBe(author.id)
   })
 
   it('author can submit their own draft', async () => {

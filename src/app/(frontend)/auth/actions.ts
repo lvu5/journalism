@@ -4,16 +4,9 @@ import { redirect } from 'next/navigation'
 
 import { syncSupabaseAuthor } from '@/lib/author-identity'
 import { safeNextPath } from '@/lib/auth'
+import type { AuthFormState } from '@/lib/auth-form-state'
 import type { Locale } from '@/lib/i18n'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-
-export type AuthFormState = {
-  status: 'idle' | 'success' | 'error'
-  message: string
-  fieldErrors?: Partial<Record<'email' | 'name' | 'password' | 'passwordConfirm', string>>
-}
-
-export const initialAuthState: AuthFormState = { status: 'idle', message: '' }
 
 const valueOf = (formData: FormData, name: string) => {
   const value = formData.get(name)

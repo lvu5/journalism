@@ -3,13 +3,9 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 
-import {
-  initialAuthState,
-  loginAction,
-  registerAction,
-  type AuthFormState,
-} from '@/app/(frontend)/auth/actions'
+import { loginAction, registerAction } from '@/app/(frontend)/auth/actions'
 import { CaptchaField } from '@/components/CaptchaField'
+import { initialAuthState, type AuthFormState } from '@/lib/auth-form-state'
 import type { Locale } from '@/lib/i18n'
 
 type AuthFormProps = {

@@ -107,6 +107,8 @@ Draft → Submitted → In review → Changes requested → Submitted
 
 Payload's `_status` remains `draft` throughout editorial review. It changes to `published` only when an administrator publishes, preventing workflow approval from accidentally making a story public.
 
+Authors can keep up to 10 private article drafts. A draft may be incomplete, can be reopened from `/author`, and enters editorial review only when the author chooses **Submit for review**.
+
 ## Case and community workflow
 
 Case lifecycle labels are public and intentionally separate from evidence verification:
@@ -129,7 +131,7 @@ The MVP accepts source links rather than file uploads. Add a secure, encrypted d
 
 ## Content model
 
-- **Articles:** title, event date, summary, Markdown body, optional account authors, optional public bylines, citations, topics, related incidents, and workflow state.
+- **Articles:** title, event date, summary, Markdown body, optional account authors, optional public bylines, keyed citations (`\\cite{source-key}`), topics, related incidents, and workflow state.
 - **Cases:** event date range, lifecycle status, verification status, crowdsourcing switch, significance, severity, citations, location, and related articles.
 - **Community contributions:** case, contribution type, public content, private contact details, review state, reviewer notes, and publication approval.
 - **Reviews:** private reviewer decision and feedback linked to an article.

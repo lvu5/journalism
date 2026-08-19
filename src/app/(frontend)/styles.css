@@ -30,9 +30,7 @@ html {
 
 body {
   margin: 0;
-  background:
-    linear-gradient(rgba(21, 21, 19, 0.018) 1px, transparent 1px),
-    var(--paper);
+  background: linear-gradient(rgba(21, 21, 19, 0.018) 1px, transparent 1px), var(--paper);
   background-size: 100% 8px;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
@@ -1556,6 +1554,21 @@ select {
   text-decoration-thickness: 2px;
 }
 
+.markdown-body a[href^='#citation-'] {
+  display: inline-block;
+  margin-inline: 0.08em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.68em;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: super;
+}
+
+.citations li[id] {
+  scroll-margin-top: 24px;
+}
+
 .markdown-body blockquote {
   margin: 2em 0;
   padding: 24px 0 24px 28px;
@@ -2015,6 +2028,255 @@ select {
   grid-column: 1 / -1;
 }
 
+.citation-fieldset {
+  display: block;
+}
+
+.citation-form-help {
+  max-width: 640px;
+  margin: 4px 0 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.citation-form-rows {
+  display: grid;
+  gap: 14px;
+}
+
+.citation-form-row {
+  padding: 18px;
+  border: 1px solid var(--rule);
+}
+
+.citation-form-row-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.citation-form-row-heading strong {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.citation-form-row-heading button,
+.citation-add-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--red);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.citation-form-row-heading button:hover,
+.citation-add-button:hover {
+  text-decoration: underline;
+}
+
+.citation-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.45fr);
+  gap: 18px;
+}
+
+.citation-title-field,
+.citation-url-field {
+  grid-column: 1 / -1;
+}
+
+.citation-add-button {
+  margin-top: 16px;
+}
+
+.markdown-editor {
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  background: var(--paper-bright);
+}
+
+.markdown-editor-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  min-height: 48px;
+  padding-inline: 14px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.markdown-editor-header > div {
+  display: flex;
+  align-items: center;
+}
+
+.markdown-editor-header button {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.markdown-editor-header button:hover,
+.markdown-editor-header button:focus-visible,
+.markdown-editor-header button[aria-selected='true'] {
+  color: var(--red);
+}
+
+.markdown-editor-header button[aria-selected='true'] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.markdown-toolbar {
+  gap: 2px;
+}
+
+.form-field .markdown-editor textarea {
+  display: block;
+  min-height: 430px;
+  padding: 20px 26px;
+  border: 0;
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.form-field .markdown-editor textarea:focus {
+  border: 0;
+  box-shadow: inset 3px 0 0 var(--red);
+}
+
+.markdown-editor textarea.markdown-editor-hidden {
+  display: none;
+}
+
+.citation-autocomplete {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 46px;
+  padding: 8px 14px;
+  overflow-x: auto;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.citation-autocomplete button {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--rule);
+  background: var(--paper-bright);
+  color: var(--ink);
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+.citation-autocomplete button:hover,
+.citation-autocomplete button[aria-selected='true'] {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.citation-autocomplete > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.markdown-editor-preview {
+  min-height: 430px;
+  padding: 28px;
+}
+
+.markdown-editor-empty {
+  color: var(--muted);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+}
+
+.markdown-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.article-form-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  padding-top: 22px;
+  border-top: 1px solid var(--ink);
+}
+
+.article-form-footer > p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.article-form-footer > p strong {
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.article-form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.draft-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.draft-button:hover:not(:disabled) {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.draft-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .author-page {
   padding-block: 42px 90px;
 }
@@ -2052,9 +2314,25 @@ select {
 }
 
 .author-submissions h2 {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 11px;
   letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.author-submissions-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.author-submissions-heading > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -2083,6 +2361,24 @@ select {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 18px;
   font-weight: 400;
+}
+
+.article-draft-link {
+  display: grid;
+  gap: 5px;
+  width: fit-content;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.article-draft-link:hover {
+  color: var(--red);
+}
+
+.article-draft-link small {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .author-submissions li small,
@@ -2817,9 +3113,43 @@ select {
     grid-column: auto;
   }
 
+  .citation-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .citation-title-field,
+  .citation-url-field {
+    grid-column: auto;
+  }
+
+  .markdown-editor-header {
+    display: grid;
+    gap: 0;
+    padding: 8px;
+  }
+
+  .markdown-toolbar {
+    overflow-x: auto;
+  }
+
   .author-header {
     align-items: start;
     flex-direction: column;
+  }
+
+  .article-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .article-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .article-form-actions .primary-button,
+  .article-form-actions .draft-button {
+    width: 100%;
   }
 
   .auth-page {
